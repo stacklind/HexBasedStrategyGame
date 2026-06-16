@@ -9,7 +9,7 @@ using UnityEngine;
      * etc.
      */
 [Flags]
-public enum TileTypeEnum : uint
+public enum TileType : uint
 {
     ALL = 0b00011111,
     OCEAN = 0b00000001,
@@ -59,13 +59,13 @@ public class MapHandler
     }
 
     /// <summary>
-    /// Returns the <see cref="TileTypeEnum"/> at the given XY-coordinates using odd-r layout.
+    /// Returns the <see cref="TileType"/> at the given XY-coordinates using odd-r layout.
     /// </summary>
     /// <param name="x">X coordinate (row).</param>
     /// <param name="y">Y coordinate (column).</param>
     /// <returns>The tile type at the specified offset coordinates.</returns>
     /// <exception cref="ArgumentOutOfRangeException">Thrown when the coordinates are outside the map bounds.</exception>
-    public TileTypeEnum GetTileTypeOddR(int x, int y)
+    public TileType GetTileTypeOddR(int x, int y)
     {
         if (x < 0 || x >= map.GetLength(0) || y < 0 || y >= map.GetLength(1))
         {
@@ -81,7 +81,7 @@ public class MapHandler
     /// <param name="r">Axial r coordinate.</param>
     /// <param name="tileType">Outputs the tile type when found.</param>
     /// <returns>True if the axial coordinates are valid and <paramref name="tileType"/> is set; otherwise false.</returns>
-    public bool GetTileTypeAxial(int q, int r, out TileTypeEnum tileType)
+    public bool GetTileTypeAxial(int q, int r, out TileType tileType)
     {
         if(IsValidAxial(q, r))
         {
@@ -101,7 +101,7 @@ public class MapHandler
     public MapTile GetGridTileFromGridXY(int x, int y) => map[x, y];
     public MapTile GetGridTileFromGridXY((int x, int y) coords) => map[coords.x, coords.y];
 
-    public MapTile[] FindShortestPath((int x, int y) from, (int x, int y) to, Func<TileTypeEnum, bool> isWalkable)
+    public MapTile[] FindShortestPath((int x, int y) from, (int x, int y) to, Func<TileType, bool> isWalkable)
     {
         return pathfinding.Solve(from, to, isWalkable);
     }
@@ -118,12 +118,12 @@ public class MapHandler
     /// <param name="width">Grid width in cells.</param>
     /// <param name="height">Grid height in cells.</param>
     /// <param name="cellSize">Size of each cell in map units.</param>
-    private void GenerateGrid(int width, int height, int cellSize, AxialIndexArray2D<TileTypeEnum> tileTypes)
+    private void GenerateGrid(int width, int height, int cellSize, AxialIndexArray2D<TileType> tileTypes)
     {
         // Create a parent GameObject to hold all tile GameObjects in the scene hierarchy.
         GameObject parent = new GameObject("Grid");
 
-        TileTypeEnum[,] xyMap = tileTypes.ToArray();
+        TileType[,] xyMap = tileTypes.ToArray();
 
         for (int x = 0; x < width; x++)
         {

@@ -23,22 +23,22 @@ public class WFCSolver
     private readonly uint PLAINS_RULES =        0b00011100;
     private readonly uint DESERT_RULES =        0b00011000;
 
-    private AxialIndexArray2D<TileTypeEnum> _nodes;
+    private AxialIndexArray2D<TileType> _nodes;
     SpecialStack<(int, int)> searchStack;
 
     public WFCSolver(int width, int height)
     {
-        _nodes = new AxialIndexArray2D<TileTypeEnum>(width, height);
+        _nodes = new AxialIndexArray2D<TileType>(width, height);
         searchStack = new SpecialStack<(int, int)>();
     }
 
-    public AxialIndexArray2D<TileTypeEnum> Solve()
+    public AxialIndexArray2D<TileType> Solve()
     {
-        SpecialDictionary<(int, int), TileTypeEnum> predetermined = new SpecialDictionary<(int, int), TileTypeEnum>();
-        predetermined.Add(HexGrid.OddRToAxial(0, 0), TileTypeEnum.OCEAN);
-        predetermined.Add(HexGrid.OddRToAxial(0, _nodes.GetLength(1) - 1), TileTypeEnum.OCEAN);
-        predetermined.Add(HexGrid.OddRToAxial(_nodes.GetLength(0) - 1, _nodes.GetLength(1) - 1), TileTypeEnum.OCEAN);
-        predetermined.Add(HexGrid.OddRToAxial(_nodes.GetLength(0) - 1, 0), TileTypeEnum.OCEAN);
+        SpecialDictionary<(int, int), TileType> predetermined = new SpecialDictionary<(int, int), TileType>();
+        predetermined.Add(HexGrid.OddRToAxial(0, 0), TileType.OCEAN);
+        predetermined.Add(HexGrid.OddRToAxial(0, _nodes.GetLength(1) - 1), TileType.OCEAN);
+        predetermined.Add(HexGrid.OddRToAxial(_nodes.GetLength(0) - 1, _nodes.GetLength(1) - 1), TileType.OCEAN);
+        predetermined.Add(HexGrid.OddRToAxial(_nodes.GetLength(0) - 1, 0), TileType.OCEAN);
         PrepareNodes(predetermined);
 
         if (predetermined.Count > 0)
@@ -55,14 +55,14 @@ public class WFCSolver
         return _nodes;
     }
 
-    private void PrepareNodes(SpecialDictionary<(int, int), TileTypeEnum> predetermined)
+    private void PrepareNodes(SpecialDictionary<(int, int), TileType> predetermined)
     {
         for(int r = 0; r < _nodes.GetLength(1); r++)
         {
             int qMin = HexGrid.QMin(r);
             for (int q = 0 + qMin; q < qMin + _nodes.GetLength(0); q++)
             {
-                _nodes[q, r] = TileTypeEnum.ALL;
+                _nodes[q, r] = TileType.ALL;
                 if (predetermined.ContainsKey((q, r)))
                 {
                     continue;
@@ -78,11 +78,11 @@ public class WFCSolver
         if (BitwiseUtils.CountActiveBits(available) == 1) return;
         int index = GetRandomAvailableTileType(available);
         uint result = available & 1u << index;
-        _nodes[q, r] = (TileTypeEnum)result;
+        _nodes[q, r] = (TileType)result;
         Propagate(q, r);
     }
 
-    private void CollapseNodeSpecific(int q, int r, TileTypeEnum tileType)
+    private void CollapseNodeSpecific(int q, int r, TileType tileType)
     {
         if ((_nodes[q, r] & tileType) == 0) throw new ArgumentOutOfRangeException("Cant propogate that tile type.");
 
@@ -90,11 +90,11 @@ public class WFCSolver
         Propagate(q, r);
     }
 
-    private void CollapsePredetermined(SpecialDictionary<(int, int), TileTypeEnum> predetermined)
+    private void CollapsePredetermined(SpecialDictionary<(int, int), TileType> predetermined)
     {
         while (predetermined.Count > 0)
         {
-            ((int q, int r), TileTypeEnum tileType) = predetermined.Pop();
+            ((int q, int r), TileType tileType) = predetermined.Pop();
             CollapseNodeSpecific(q, r, tileType);
         }
     }
@@ -107,7 +107,7 @@ public class WFCSolver
         while (nodesToEvaluate.Count != 0)
         {
             (q, r) = nodesToEvaluate.Pop();
-            TileTypeEnum validAdjacentTiles = ComputeValidAdjacentTiles(_nodes[q, r]);
+            TileType validAdjacentTiles = ComputeValidAdjacentTiles(_nodes[q, r]);
             (int, int)[] neighBours = HexGrid.GetNeighboursAxial(q, r);
 
             foreach((int q, int r) neighbour in neighBours)
@@ -120,28 +120,28 @@ public class WFCSolver
             }
         }
 
-        void PropagateNeighbour(int q, int r, TileTypeEnum tileMask)
+        void PropagateNeighbour(int q, int r, TileType tileMask)
         {
-            TileTypeEnum availableTiles = _nodes[q, r];
-            TileTypeEnum maskedAvailableTiles = availableTiles & tileMask;
+            TileType availableTiles = _nodes[q, r];
+            TileType maskedAvailableTiles = availableTiles & tileMask;
 
             if(availableTiles != maskedAvailableTiles)
             {
-                _nodes[q, r] = (TileTypeEnum)maskedAvailableTiles;
+                _nodes[q, r] = (TileType)maskedAvailableTiles;
                 nodesToEvaluate.Push((q, r));
             }
         }
     }
 
-    private TileTypeEnum ComputeValidAdjacentTiles(TileTypeEnum availableTiles)
+    private TileType ComputeValidAdjacentTiles(TileType availableTiles)
     {
         uint result = 0b00000000;
-        if ((availableTiles & TileTypeEnum.OCEAN) != 0)      result |= OCEAN_RULES;
-        if ((availableTiles & TileTypeEnum.COAST) != 0)      result |= COAST_RULES;
-        if ((availableTiles & TileTypeEnum.GRASSLANDS) != 0) result |= GRASSLANDS_RULES;
-        if ((availableTiles & TileTypeEnum.PLAINS) != 0)     result |= PLAINS_RULES;
-        if ((availableTiles & TileTypeEnum.DESERT) != 0)     result |= DESERT_RULES;
-        return (TileTypeEnum)result;
+        if ((availableTiles & TileType.OCEAN) != 0)      result |= OCEAN_RULES;
+        if ((availableTiles & TileType.COAST) != 0)      result |= COAST_RULES;
+        if ((availableTiles & TileType.GRASSLANDS) != 0) result |= GRASSLANDS_RULES;
+        if ((availableTiles & TileType.PLAINS) != 0)     result |= PLAINS_RULES;
+        if ((availableTiles & TileType.DESERT) != 0)     result |= DESERT_RULES;
+        return (TileType)result;
     }
 
     private int GetRandomAvailableTileType(uint n)

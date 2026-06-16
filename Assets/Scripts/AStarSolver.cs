@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 public class AStarSolver
 {
-    public MapTile[] Solve((int x, int y) start, (int x, int y) goal, Func<TileTypeEnum, bool> isWalkable)
+    public MapTile[] Solve((int x, int y) start, (int x, int y) goal, Func<TileType, bool> isWalkable)
     {
         start = HexGrid.OddRToAxial(start);
         goal = HexGrid.OddRToAxial(goal);
@@ -24,7 +24,7 @@ public class AStarSolver
             }
             foreach((int q, int r) neighbour in HexGrid.GetNeighboursAxial(current.q, current.r))
             {
-                if(MapHandler.Instance.GetTileTypeAxial(neighbour.q, neighbour.r, out TileTypeEnum neighbourTile))
+                if(MapHandler.Instance.GetTileTypeAxial(neighbour.q, neighbour.r, out TileType neighbourTile))
                 {
                     if (!isWalkable(neighbourTile)) continue;
                     int tentativeGScore = gScore[current] + MovementCost(current, neighbour);
@@ -55,11 +55,11 @@ public class AStarSolver
         return path.ToArray();
     }
 
-    public static bool OnlyLand(TileTypeEnum tileType)
+    public static bool OnlyLand(TileType tileType)
     {
-        return (tileType & TileTypeEnum.GRASSLANDS) != 0 
-            || (tileType & TileTypeEnum.PLAINS) != 0
-            || (tileType & TileTypeEnum.DESERT) != 0;
+        return (tileType & TileType.GRASSLANDS) != 0 
+            || (tileType & TileType.PLAINS) != 0
+            || (tileType & TileType.DESERT) != 0;
     }
 
     private int Heuristic((int q, int r) from, (int q, int r) to)

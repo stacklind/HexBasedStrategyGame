@@ -9,7 +9,7 @@ public class MapTile
     private Yield _yield;
 
     public GameObject gameObject { get => _gameObject; }
-    public TileTypeEnum TileType { get; private set; }
+    public TileType TileType { get; private set; }
     public Yield Yield 
     { 
         get => _yield;
