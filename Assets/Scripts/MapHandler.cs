@@ -42,13 +42,6 @@ public class MapHandler
         AxialIndexArray2D<TileType> tileMap = wfc.Solve();
         pathfinding = new AStarSolver(tileMap);
         GenerateGrid(mapSettings.Width, mapSettings.Height, mapSettings.CellSize, tileMap);
-        MapTile[] path = pathfinding.Solve((12, 10), (13, 10), AStarSolver.OnlyLand);
-        MaterialPropertyBlock block = new MaterialPropertyBlock();
-        block.SetColor("_PlayerColor", Color.red);
-        foreach (MapTile node in path)
-        {
-            node.gameObject.GetComponent<MeshRenderer>().SetPropertyBlock(block);
-        }
     }
 
     /// <summary>
@@ -62,7 +55,6 @@ public class MapHandler
             new MapHandler(mapSettings);
             return true;
         }
-        Debug.Log("There is already an instance of MapHandler");
         return false;
     }
 
@@ -105,9 +97,9 @@ public class MapHandler
     public MapTile GetGridTileFromGridXY(int x, int y) => map[x, y];
     public MapTile GetGridTileFromGridXY((int x, int y) coords) => map[coords.x, coords.y];
 
-    public MapTile[] FindShortestPath((int x, int y) from, (int x, int y) to, Func<TileType, bool> isWalkable)
+    public bool FindShortestPath((int x, int y) from, (int x, int y) to, Func<TileType, bool> isWalkable, out MapTile[] path)
     {
-        return pathfinding.Solve(from, to, isWalkable);
+        return pathfinding.Solve(from, to, isWalkable, out path);
     }
 
     public bool IsValidAxial(int q, int r)

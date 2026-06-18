@@ -1,5 +1,4 @@
 using System;
-using Unity.GraphToolkit.Editor;
 
 namespace MyCollections
 {
@@ -81,6 +80,7 @@ namespace MyCollections
             (Node result, Node previous) = Find(item);
             if (result != null)
             {
+                Count--;
                 if (previous != null) previous.Tail = result.Tail;
                 else firstInQueue = result.Tail;
                 if (result == lastInQueue) lastInQueue = previous;

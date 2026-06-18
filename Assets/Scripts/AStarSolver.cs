@@ -12,11 +12,9 @@ public class AStarSolver
         _map = map;
     }
 
-    public MapTile[] Solve((int x, int y) start, (int x, int y) goal, Func<TileType, bool> isWalkable)
+    public bool Solve((int x, int y) start, (int x, int y) goal, Func<TileType, bool> isWalkable, out MapTile[] path)
     {
-        Debug.Log(start);
         start = HexGrid.OddRToAxial(start);
-        Debug.Log(start);
         goal = HexGrid.OddRToAxial(goal);
         PriorityQueue<(int q, int r)> openSet = new PriorityQueue<(int q, int r)>();
         var cameFrom = new Dictionary<(int q, int r), (int q, int r)>();
@@ -27,13 +25,11 @@ public class AStarSolver
         openSet.Enqueue(start, fScore[start]);
         while(openSet.Count > 0)
         {
-            Debug.Log("Remaining in set: " + openSet.Count);
             (int q, int r) current = openSet.Pop();
-            Debug.Log("Evaluating: " + current);
             if(current == goal)
             {
-                Debug.Log("Done");
-                return ReconstructPath(cameFrom, current);
+                path = ReconstructPath(cameFrom, current);
+                return true;
             }
             foreach((int q, int r) neighbour in HexGrid.GetNeighboursAxial(current.q, current.r))
             {
@@ -44,7 +40,6 @@ public class AStarSolver
                 TileType neighbourTileType = _map[neighbour.q, neighbour.r];
                 if (!isWalkable(neighbourTileType))
                 {
-                    Debug.Log(neighbour + " isnt walkable");
                     continue;
                 }
                 int tentativeGScore = gScore[current] + MovementCost(current, neighbour);
@@ -55,19 +50,17 @@ public class AStarSolver
                     fScore[neighbour] = tentativeGScore + Heuristic(neighbour, goal);
                     if (!openSet.Contains(neighbour, out int priority))
                     {
-                        Debug.Log("Enqueue: " + neighbour);
                         openSet.Enqueue(neighbour, fScore[neighbour]);
                     }
                     else if (fScore[neighbour] < priority)
                     {
-                        Debug.Log("Update: " + neighbour);
                         openSet.Update(neighbour, fScore[neighbour]);
                     }
                 }
             }
         }
-
-        return null; // No path found
+        path = default;
+        return false; // No path found
     }
 
     private MapTile[] ReconstructPath(Dictionary<(int q, int r), (int q, int r)> cameFrom, (int q, int r) current)
