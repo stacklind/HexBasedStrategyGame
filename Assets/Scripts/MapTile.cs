@@ -5,7 +5,7 @@ using UnityEngine;
 public class MapTile
 {
     private GameObject _gameObject;
-    private TileGOHandler _tileHandler;
+    private TileGOHandler _tileGOHandler;
     private Yield _yield;
 
     public GameObject gameObject { get => _gameObject; }
@@ -16,17 +16,22 @@ public class MapTile
         set
         {
             _yield += value;
-            _tileHandler.UpdateYieldText(_yield);
+            _tileGOHandler.UpdateYieldText(_yield);
         }
     }
 
-    public MapTile(int x, int y, int cellSize, TileInfo tileType, Transform parent)
+    public MapTile(int x, int y, int cellSize, TileType tileType, Transform parent)
     {
-        CreateGameObject(x, y, tileType.Prefab, parent);
+        // Determine the TileType index from the bitmask stored in xyMap.
+        int tileTypeIndex = BitwiseUtils.GetFirstActiveBitIndex((uint)tileType, GameHandler.TileInfos.Length);
+        TileInfo tileInfo = GameHandler.TileInfos[tileTypeIndex];
+
+        CreateGameObject(x, y, tileInfo.Prefab, parent);
         SetupGameObjectTransform(x, y, new HexInfo(cellSize));
 
-        _tileHandler = _gameObject.GetComponent<TileGOHandler>();
-        Yield = tileType.Yield;
+        _tileGOHandler = _gameObject.GetComponent<TileGOHandler>();
+        Yield = tileInfo.Yield;
+        TileType = tileType;
     }
 
     private void CreateGameObject(int x, int y, GameObject prefab, Transform parent)

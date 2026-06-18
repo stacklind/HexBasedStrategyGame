@@ -11,12 +11,12 @@ using UnityEngine;
 [Flags]
 public enum TileType : uint
 {
-    ALL = 0b00011111,
-    OCEAN = 0b00000001,
-    COAST = 0b00000010,
-    GRASSLANDS = 0b00000100,
-    PLAINS = 0b00001000,
-    DESERT = 0b00010000
+    ALL         = 0b00011111,
+    OCEAN       = 0b00000001,
+    COAST       = 0b00000010,
+    GRASSLANDS  = 0b00000100,
+    PLAINS      = 0b00001000,
+    DESERT      = 0b00010000
 }
 
 public class MapHandler
@@ -37,10 +37,18 @@ public class MapHandler
     private MapHandler(MapSettings mapSettings)
     {
         Instance = this;
-        pathfinding = new AStarSolver();
         map = new MapTile[mapSettings.Width, mapSettings.Height];
         WFCSolver wfc = new WFCSolver(mapSettings.Width, mapSettings.Height);
-        GenerateGrid(mapSettings.Width, mapSettings.Height, mapSettings.CellSize, wfc.Solve());
+        AxialIndexArray2D<TileType> tileMap = wfc.Solve();
+        pathfinding = new AStarSolver(tileMap);
+        GenerateGrid(mapSettings.Width, mapSettings.Height, mapSettings.CellSize, tileMap);
+        MapTile[] path = pathfinding.Solve((12, 10), (13, 10), AStarSolver.OnlyLand);
+        MaterialPropertyBlock block = new MaterialPropertyBlock();
+        block.SetColor("_PlayerColor", Color.red);
+        foreach (MapTile node in path)
+        {
+            node.gameObject.GetComponent<MeshRenderer>().SetPropertyBlock(block);
+        }
     }
 
     /// <summary>
@@ -71,6 +79,7 @@ public class MapHandler
         {
             throw new ArgumentOutOfRangeException("Coordinates are out of bounds.");
         }
+
         return map[x, y].TileType;
     }
 
@@ -81,15 +90,10 @@ public class MapHandler
     /// <param name="r">Axial r coordinate.</param>
     /// <param name="tileType">Outputs the tile type when found.</param>
     /// <returns>True if the axial coordinates are valid and <paramref name="tileType"/> is set; otherwise false.</returns>
-    public bool GetTileTypeAxial(int q, int r, out TileType tileType)
+    public TileType GetTileTypeAxial(int q, int r)
     {
-        if(IsValidAxial(q, r))
-        {
-            tileType = map[q, r].TileType;
-            return true;
-        }
-        tileType = 0;
-        return false;
+        (int x, int y) = HexGrid.AxialToOddR(q, r);
+        return GetTileTypeOddR(x, y);
     }
 
     /// <summary>
@@ -112,6 +116,11 @@ public class MapHandler
         return (q - qMin) < map.GetLength(0) && (q - qMin) >= 0 && r < map.GetLength(1) && r >= 0;
     }
 
+    public bool IsValidAxial((int q, int r) axial)
+    {
+        return IsValidAxial(axial.q, axial.r);
+    }
+
     /// <summary>
     /// Instantiates the grid GameObject parent and creates GridTile objects for each cell.
     /// </summary>
@@ -129,11 +138,8 @@ public class MapHandler
         {
             for (int y = 0; y < height; y++)
             {
-                // Determine the TileType index from the bitmask stored in xyMap.
-                int tileTypeIndex = BitwiseUtils.GetFirstActiveBitIndex((uint)xyMap[x, y], GameHandler.TileTypes.Length);
-
                 // Instantiate a GridTile with the resolved TileType and attach it to the parent transform.
-                MapTile gridTile = new MapTile(x, y, cellSize, GameHandler.TileTypes[tileTypeIndex], parent.transform);
+                MapTile gridTile = new MapTile(x, y, cellSize, xyMap[x, y], parent.transform);
                 map[x, y] = gridTile;
             }
         }

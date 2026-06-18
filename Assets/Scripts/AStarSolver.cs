@@ -2,11 +2,21 @@ using HexagonUtils;
 using MyCollections;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 public class AStarSolver
 {
+    private AxialIndexArray2D<TileType> _map;
+
+    public AStarSolver(AxialIndexArray2D<TileType> map)
+    {
+        _map = map;
+    }
+
     public MapTile[] Solve((int x, int y) start, (int x, int y) goal, Func<TileType, bool> isWalkable)
     {
+        Debug.Log(start);
         start = HexGrid.OddRToAxial(start);
+        Debug.Log(start);
         goal = HexGrid.OddRToAxial(goal);
         PriorityQueue<(int q, int r)> openSet = new PriorityQueue<(int q, int r)>();
         var cameFrom = new Dictionary<(int q, int r), (int q, int r)>();
@@ -17,24 +27,41 @@ public class AStarSolver
         openSet.Enqueue(start, fScore[start]);
         while(openSet.Count > 0)
         {
+            Debug.Log("Remaining in set: " + openSet.Count);
             (int q, int r) current = openSet.Pop();
+            Debug.Log("Evaluating: " + current);
             if(current == goal)
             {
+                Debug.Log("Done");
                 return ReconstructPath(cameFrom, current);
             }
             foreach((int q, int r) neighbour in HexGrid.GetNeighboursAxial(current.q, current.r))
             {
-                if(MapHandler.Instance.GetTileTypeAxial(neighbour.q, neighbour.r, out TileType neighbourTile))
+                if(!MapHandler.Instance.IsValidAxial(neighbour))
                 {
-                    if (!isWalkable(neighbourTile)) continue;
-                    int tentativeGScore = gScore[current] + MovementCost(current, neighbour);
-                    if (!gScore.ContainsKey(neighbour) || tentativeGScore < gScore[neighbour])
+                    continue;
+                }
+                TileType neighbourTileType = _map[neighbour.q, neighbour.r];
+                if (!isWalkable(neighbourTileType))
+                {
+                    Debug.Log(neighbour + " isnt walkable");
+                    continue;
+                }
+                int tentativeGScore = gScore[current] + MovementCost(current, neighbour);
+                if (!gScore.ContainsKey(neighbour) || tentativeGScore < gScore[neighbour])
+                {
+                    cameFrom[neighbour] = current;
+                    gScore[neighbour] = tentativeGScore;
+                    fScore[neighbour] = tentativeGScore + Heuristic(neighbour, goal);
+                    if (!openSet.Contains(neighbour, out int priority))
                     {
-                        cameFrom[neighbour] = current;
-                        gScore[neighbour] = tentativeGScore;
-                        fScore[neighbour] = tentativeGScore + Heuristic(neighbour, goal);
-                        if (!openSet.Contains(neighbour, out int priority)) openSet.Enqueue(neighbour, fScore[neighbour]);
-                        else if (fScore[neighbour] < priority) openSet.Update(neighbour, fScore[neighbour]);
+                        Debug.Log("Enqueue: " + neighbour);
+                        openSet.Enqueue(neighbour, fScore[neighbour]);
+                    }
+                    else if (fScore[neighbour] < priority)
+                    {
+                        Debug.Log("Update: " + neighbour);
+                        openSet.Update(neighbour, fScore[neighbour]);
                     }
                 }
             }

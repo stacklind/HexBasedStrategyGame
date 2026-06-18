@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class GameHandler : MonoBehaviour
 {
-    public static TileInfo[] TileTypes;
+    public static TileInfo[] TileInfos;
     public static MapSettings _mapSettings;
 
     [Header("World")]
@@ -13,7 +13,7 @@ public class GameHandler : MonoBehaviour
     [SerializeField]
     private int cellSize = 10;
     [SerializeField]
-    private TileInfo[] tileTypes;
+    private TileInfo[] tileInfos;
 
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -24,7 +24,7 @@ public class GameHandler : MonoBehaviour
             height,
             cellSize);
 
-        TileTypes = tileTypes;
+        TileInfos = tileInfos;
         MapHandler.Init(mapSettings);
     }
 
