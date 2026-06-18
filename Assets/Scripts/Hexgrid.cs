@@ -4,6 +4,16 @@ namespace HexagonUtils
 {
     public class HexGrid
     {
+        public enum Direction
+        {
+            Left,
+            UpLeft,
+            UpRight,
+            Right,
+            DownRight,
+            DownLeft
+        }
+
         public static (int, int) OddRToAxial(int x, int y)
         {
             int q = x - (y - (y & 1)) / 2;
