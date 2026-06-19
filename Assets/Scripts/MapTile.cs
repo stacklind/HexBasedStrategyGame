@@ -22,9 +22,9 @@ public class MapTile
 
     public MapTile(int x, int y, int cellSize, TileType tileType, Transform parent)
     {
-        // Determine the TileType index from the bitmask stored in xyMap.
-        int tileTypeIndex = BitwiseUtils.GetFirstActiveBitIndex((uint)tileType, GameHandler.TileInfos.Length);
-        TileInfo tileInfo = GameHandler.TileInfos[tileTypeIndex];
+        // Determine the PossibleTileTypes index from the bitmask stored in xyMap.
+        int tileTypeIndex = BitwiseUtils.GetFirstActiveBitIndex((uint)tileType, GameHandler.TileRules.Length);
+        TileInfo tileInfo = GameHandler.TileRules[tileTypeIndex].TileInfo;
 
         CreateGameObject(x, y, tileInfo.Prefab, parent);
         SetupGameObjectTransform(x, y, new HexInfo(cellSize));

@@ -4,35 +4,24 @@ using System.Collections.Generic;
 
 public class WFCSolver
 {
-    
-    private readonly int NUMBER_OF_TILETYPES = 5;
-
-    /*
-     * Each tile-type has rules governing what tiles
-     * can spawn adjacent to them. An active bit
-     * represents that the corresponding tile is a legal
-     * adjacent tile.
-     * 
-     * Since the Ocean-tile is 0b00000001 (first bit active)
-     * that means any rule that has the first bit active
-     * allows an Ocean-tile to spawn next to the tile.
-     */
-    private readonly uint OCEAN_RULES =         0b00000011;
-    private readonly uint COAST_RULES =         0b00000111;
-    private readonly uint GRASSLANDS_RULES =    0b00001110;
-    private readonly uint PLAINS_RULES =        0b00011100;
-    private readonly uint DESERT_RULES =        0b00011000;
-
-    private AxialIndexArray2D<TileType> _nodes;
-    SpecialStack<(int, int)> searchStack;
-
-    public WFCSolver(int width, int height)
+    public struct Node
     {
-        _nodes = new AxialIndexArray2D<TileType>(width, height);
-        searchStack = new SpecialStack<(int, int)>();
+        public TileType PossibleTileTypes;
+        public uint PossibleElevations;
+
+        public Node(TileType tileType, uint elevation)
+        {
+            PossibleTileTypes = tileType;
+            PossibleElevations = elevation;
+        }
     }
 
-    public AxialIndexArray2D<TileType> Solve()
+    public WFCSolver()
+    {
+        Solve(GameHandler.MapSettings.Width, GameHandler.MapSettings.Height);
+    }
+
+    public AxialIndexArray2D<TileType> Solve(int width, int height)
     {
         SpecialDictionary<(int, int), TileType> predetermined = new SpecialDictionary<(int, int), TileType>();
         predetermined.Add(HexGrid.OddRToAxial(0, 0), TileType.OCEAN);
@@ -53,6 +42,38 @@ public class WFCSolver
         }
         
         return _nodes;
+    }
+
+    private AxialIndexArray2D<uint> TilePass(Func<SpecialDictionary<(int, int), TileType>> predeterminedFunc)
+    {
+        SpecialStack<(int, int)> searchStack;
+        Node defaultNode = new Node(TileType.ALL, (1u << (GameHandler.MapSettings.MaxElevation + 1)) - 1);
+        AxialIndexArray2D<uint> nodes = new AxialIndexArray2D<uint>();
+        SpecialDictionary<(int, int), TileType> predetermined = predeterminedFunc();
+
+        if (predetermined.Count > 0)
+        {
+            CollapsePredetermined(predetermined);
+        }
+
+        while(searchStack.Count > 0)
+        {
+            (int x, int y) = searchStack.GetRandomElement();
+            CollapseNode(x, y);
+        }
+
+        return nodes;
+    }
+
+    private SpecialDictionary<(int, int), TileType> MakePredeterminedTiles()
+    {
+        SpecialDictionary<(int, int), TileType> predetermined = new SpecialDictionary<(int, int), TileType>();
+        predetermined.Add(HexGrid.OddRToAxial(0, 0), TileType.OCEAN);
+        predetermined.Add(HexGrid.OddRToAxial(0, _nodes.GetLength(1) - 1), TileType.OCEAN);
+        predetermined.Add(HexGrid.OddRToAxial(_nodes.GetLength(0) - 1, _nodes.GetLength(1) - 1), TileType.OCEAN);
+        predetermined.Add(HexGrid.OddRToAxial(_nodes.GetLength(0) - 1, 0), TileType.OCEAN);
+
+        return predetermined;
     }
 
     private void PrepareNodes(SpecialDictionary<(int, int), TileType> predetermined)
@@ -135,19 +156,19 @@ public class WFCSolver
 
     private TileType ComputeValidAdjacentTiles(TileType availableTiles)
     {
-        uint result = 0b00000000;
-        if ((availableTiles & TileType.OCEAN) != 0)      result |= OCEAN_RULES;
-        if ((availableTiles & TileType.COAST) != 0)      result |= COAST_RULES;
-        if ((availableTiles & TileType.GRASSLANDS) != 0) result |= GRASSLANDS_RULES;
-        if ((availableTiles & TileType.PLAINS) != 0)     result |= PLAINS_RULES;
-        if ((availableTiles & TileType.DESERT) != 0)     result |= DESERT_RULES;
+        TileType result = 0b00000000;
+        if ((availableTiles & TileType.OCEAN) != 0)      result |= GameHandler.TileRules[0].ValidNeighbours;
+        if ((availableTiles & TileType.COAST) != 0)      result |= GameHandler.TileRules[1].ValidNeighbours;
+        if ((availableTiles & TileType.GRASSLANDS) != 0) result |= GameHandler.TileRules[2].ValidNeighbours;
+        if ((availableTiles & TileType.PLAINS) != 0)     result |= GameHandler.TileRules[3].ValidNeighbours;
+        if ((availableTiles & TileType.DESERT) != 0)     result |= GameHandler.TileRules[4].ValidNeighbours;
         return (TileType)result;
     }
 
     private int GetRandomAvailableTileType(uint n)
     {
         SpecialStack<int> stack = new SpecialStack<int>();
-        for(int i = 0; i < NUMBER_OF_TILETYPES; i++)
+        for(int i = 0; i < GameHandler.TileRules.Length; i++)
         {
             if ((n & 1u << i) != 0) { stack.Push(i); }
         }

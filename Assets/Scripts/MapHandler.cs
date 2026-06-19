@@ -8,15 +8,14 @@ using UnityEngine;
      * Coast = Second bit       (0b00000010)
      * etc.
      */
-[Flags]
-public enum TileType : uint
+[Flags]public enum TileType : uint
 {
-    ALL         = 0b00011111,
     OCEAN       = 0b00000001,
     COAST       = 0b00000010,
     GRASSLANDS  = 0b00000100,
     PLAINS      = 0b00001000,
-    DESERT      = 0b00010000
+    DESERT      = 0b00010000,
+    ALL         = 0b00011111
 }
 
 public class MapHandler
@@ -131,7 +130,7 @@ public class MapHandler
         {
             for (int y = 0; y < height; y++)
             {
-                // Instantiate a GridTile with the resolved TileType and attach it to the parent transform.
+                // Instantiate a GridTile with the resolved PossibleTileTypes and attach it to the parent transform.
                 MapTile gridTile = new MapTile(x, y, cellSize, xyMap[x, y], parent.transform);
                 map[x, y] = gridTile;
             }
