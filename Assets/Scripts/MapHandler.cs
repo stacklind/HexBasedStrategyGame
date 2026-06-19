@@ -34,8 +34,9 @@ public class MapHandler
     /// Constructor for singleton instance.
     /// </summary>
     /// <param name="mapSettings"Settings that define the map></param>
-    private MapHandler(MapSettings mapSettings)
+    private MapHandler()
     {
+        MapSettings mapSettings = GameHandler.MapSettings;
         Instance = this;
         map = new MapTile[mapSettings.Width, mapSettings.Height];
         WFCSolver wfc = new WFCSolver(mapSettings.Width, mapSettings.Height);
@@ -48,11 +49,11 @@ public class MapHandler
     /// Creates a new Grid.
     /// </summary>
     /// <param name="mapSettings">Settings that define the map.</param>
-    public static bool Init(MapSettings mapSettings)
+    public static bool Init()
     {
         if(Instance == null)
         {
-            new MapHandler(mapSettings);
+            new MapHandler();
             return true;
         }
         return false;
@@ -140,14 +141,16 @@ public class MapHandler
 
 public struct MapSettings
 {
-    public MapSettings(int width, int height, int cellSize)
+    public MapSettings(int width, int height, int cellSize, int maxElevation)
     {
         Width = width;
         Height = height;
         CellSize = cellSize;
+        MaxElevation = maxElevation;
     }
 
     public int Width { get; }
     public int Height { get; }
     public int CellSize { get; }
+    public int MaxElevation { get; }
 }

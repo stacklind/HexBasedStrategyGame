@@ -1,9 +1,11 @@
 using UnityEngine;
+using UnityEngine.UIElements;
 
 public class GameHandler : MonoBehaviour
 {
-    public static TileInfo[] TileInfos;
-    public static MapSettings _mapSettings;
+    public static TileRule[] TileRules;
+    public static TileType[] ElevationRules;
+    public static MapSettings MapSettings;
 
     [Header("World")]
     [SerializeField]
@@ -12,20 +14,39 @@ public class GameHandler : MonoBehaviour
     private int height = 10;
     [SerializeField]
     private int cellSize = 10;
+    [SerializeField, Range(1, 6)]
+    private int maxElevation = 3;
     [SerializeField]
-    private TileInfo[] tileInfos;
-
+    private TileRule[] tileRules;
+    [SerializeField]
+    private ElevationRule[] elevationRules;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     private void Start()
     {
-        MapSettings mapSettings = new MapSettings(
+        MapSettings = new MapSettings(
             width,
             height,
-            cellSize);
+            cellSize,
+            maxElevation);
 
-        TileInfos = tileInfos;
-        MapHandler.Init(mapSettings);
+        TileRules = tileRules;
+        SetupElevationRules();
+        MapHandler.Init();
     }
 
+    private void SetupElevationRules()
+    {
+        ElevationRules = new TileType[maxElevation + 1];
+        for (int i = 0; i < elevationRules.Length; i++)
+        {
+            int minEle = elevationRules[i].MinElevation;
+            int maxEle = elevationRules[i].MaxElevation > maxElevation ? maxElevation : elevationRules[i].MaxElevation;
+            while (minEle <= maxEle)
+            {
+                ElevationRules[minEle] |= elevationRules[i].ValidTileTypes;
+                minEle++;
+            }
+        }
+    }
 }
