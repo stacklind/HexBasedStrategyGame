@@ -58,18 +58,6 @@ namespace HexagonUtils
             };
             return neighbours;
         }
-
-        public static (int, int)[] GetNeighboursOddR((int x, int y) oddR)
-        {
-            (int q, int r) = OddRToAxial(oddR.x, oddR.y);
-            (int, int)[] axialNeighbours = GetNeighboursAxial(q, r);
-            (int, int)[] neighbours = new (int, int)[6];
-            for (int i = 0; i < 6; i++)
-            {
-                neighbours[i] = AxialToOddR(axialNeighbours[i].Item1, axialNeighbours[i].Item2);
-            }
-            return neighbours;
-        }
     }
 
     public struct AxialIndexArray2D<T>

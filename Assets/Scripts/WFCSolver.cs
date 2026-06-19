@@ -1,44 +1,48 @@
+using BitwiseUtils;
 using HexagonUtils;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 public class WFCSolver
 {
-    
-    private readonly int NUMBER_OF_TILETYPES = 5;
+    private readonly int NUM_LAYERS = 2;
 
-    /*
-     * Each tile-type has rules governing what tiles
-     * can spawn adjacent to them. An active bit
-     * represents that the corresponding tile is a legal
-     * adjacent tile.
-     * 
-     * Since the Ocean-tile is 0b00000001 (first bit active)
-     * that means any rule that has the first bit active
-     * allows an Ocean-tile to spawn next to the tile.
-     */
-    private readonly uint OCEAN_RULES =         0b00000011;
-    private readonly uint COAST_RULES =         0b00000111;
-    private readonly uint GRASSLANDS_RULES =    0b00001110;
-    private readonly uint PLAINS_RULES =        0b00011100;
-    private readonly uint DESERT_RULES =        0b00011000;
+    private AxialIndexArray2D<MapNode> _nodes;
+    private SpecialStack<(int, int)> searchStack;
 
-    private AxialIndexArray2D<TileType> _nodes;
-    SpecialStack<(int, int)> searchStack;
-
-    public WFCSolver(int width, int height)
+    public WFCSolver()
     {
-        _nodes = new AxialIndexArray2D<TileType>(width, height);
+        MapSettings mapSettings = GameHandler.MapSettings;
+        uint[] defaults =
+        {
+            Bits.SetActiveBits(mapSettings.MaxElevation + 1),
+            (uint) TileType.ALL
+        };
+        MapNode.Init(NUM_LAYERS, defaults);
+        _nodes = new AxialIndexArray2D<MapNode>(mapSettings.Width, mapSettings.Height);
         searchStack = new SpecialStack<(int, int)>();
     }
 
-    public AxialIndexArray2D<TileType> Solve()
+    public AxialIndexArray2D<MapNode> Solve()
     {
-        SpecialDictionary<(int, int), TileType> predetermined = new SpecialDictionary<(int, int), TileType>();
-        predetermined.Add(HexGrid.OddRToAxial(0, 0), TileType.OCEAN);
-        predetermined.Add(HexGrid.OddRToAxial(0, _nodes.GetLength(1) - 1), TileType.OCEAN);
-        predetermined.Add(HexGrid.OddRToAxial(_nodes.GetLength(0) - 1, _nodes.GetLength(1) - 1), TileType.OCEAN);
-        predetermined.Add(HexGrid.OddRToAxial(_nodes.GetLength(0) - 1, 0), TileType.OCEAN);
+        SpecialDictionary<(int, int), MapNode> predetermined = new SpecialDictionary<(int, int), MapNode>();
+        MapNode ocean = new MapNode();
+        ocean.Layers[0] = GetBitFromElevation(0);
+        ocean.Layers[1] = (uint)TileType.OCEAN;
+        predetermined.Add(HexGrid.OddRToAxial(0, 0), ocean);
+        ocean = new MapNode();
+        ocean.Layers[0] = GetBitFromElevation(0);
+        ocean.Layers[1] = (uint)TileType.OCEAN;
+        predetermined.Add(HexGrid.OddRToAxial(0, _nodes.GetLength(1) - 1), ocean);
+        ocean = new MapNode();
+        ocean.Layers[0] = GetBitFromElevation(0);
+        ocean.Layers[1] = (uint)TileType.OCEAN;
+        predetermined.Add(HexGrid.OddRToAxial(_nodes.GetLength(0) - 1, _nodes.GetLength(1) - 1), ocean);
+        ocean = new MapNode();
+        ocean.Layers[0] = GetBitFromElevation(0);
+        ocean.Layers[1] = (uint)TileType.OCEAN;
+        predetermined.Add(HexGrid.OddRToAxial(_nodes.GetLength(0) - 1, 0), ocean);
         PrepareNodes(predetermined);
 
         if (predetermined.Count > 0)
@@ -46,23 +50,39 @@ public class WFCSolver
             CollapsePredetermined(predetermined);
         }
 
+
         while (searchStack.Count > 0)
         {
-            (int x, int y) = searchStack.GetRandomElement();
-            CollapseNode(x, y);
+            (int q, int r) = searchStack.GetRandomElement();
+            for (int i = 0; i < NUM_LAYERS; i++)
+            {
+                CollapseNode(q, r, i);
+            }
         }
-        
+
         return _nodes;
     }
 
-    private void PrepareNodes(SpecialDictionary<(int, int), TileType> predetermined)
+    //public void SolveContinuous()
+    //{
+    //    (int q, int r) = searchStack.GetRandomElement();
+    //    Debug.Log($"Collapsing ({q}, {r}) with current 0-value {_nodes[q, r].Layers[0]} and 1-value {_nodes[q, r].Layers[0]}");
+    //    for (int i = 0; i < NUM_LAYERS; i++)
+    //    {
+    //        CollapseNode(q, r, i);
+    //    }
+    //    (int x, int y) = HexGrid.AxialToOddR(q, r);
+    //    MapHandler.Instance.UpdateTile(x, y, _nodes[q, r]);
+    //}
+
+    private void PrepareNodes(SpecialDictionary<(int, int), MapNode> predetermined)
     {
         for(int r = 0; r < _nodes.GetLength(1); r++)
         {
             int qMin = HexGrid.QMin(r);
             for (int q = 0 + qMin; q < qMin + _nodes.GetLength(0); q++)
             {
-                _nodes[q, r] = TileType.ALL;
+                _nodes[q, r] = new MapNode();
                 if (predetermined.ContainsKey((q, r)))
                 {
                     continue;
@@ -72,34 +92,42 @@ public class WFCSolver
         }
     }
 
-    private void CollapseNode(int q, int r)
+    private void CollapseNode(int q, int r, int layer)
     {
-        uint available = (uint)_nodes[q, r];
-        if (BitwiseUtils.CountActiveBits(available) == 1) return;
-        int index = GetRandomAvailableTileType(available);
-        uint result = available & 1u << index;
-        _nodes[q, r] = (TileType)result;
-        Propagate(q, r);
+        //Debug.Log($"Collapsing ({q}, {r}) in layer " + layer + " node has value " + _nodes[q, r].Layers[layer]);
+        uint available = _nodes[q, r].Layers[layer];
+        if (Bits.CountActiveBits(available) == 1) return;
+        uint result = GetRandomAvailable(available, layer);
+        CollapseNodeSpecific(q, r, result, layer);
     }
 
-    private void CollapseNodeSpecific(int q, int r, TileType tileType)
+    private void CollapseNodeSpecific(int q, int r, uint value, int layer)
     {
-        if ((_nodes[q, r] & tileType) == 0) throw new ArgumentOutOfRangeException("Cant propogate that tile type.");
+        //Debug.Log($"Collapse ({q}, {r}) with value " + value + " in node with " + _nodes[q, r].Layers[layer] + " available in layer " + layer);
+        if ((_nodes[q, r].Layers[layer] & value) == 0) throw new ArgumentOutOfRangeException("Cant propogate that tile type.");
 
-        _nodes[q, r] = tileType;
-        Propagate(q, r);
+        _nodes[q, r].Layers[layer] = value;
+        if (!UpdateRelatedLayer(q, r, layer))
+        {
+            throw new Exception("Could not update related layer");
+        }
+        Propagate(q, r, layer);
     }
 
-    private void CollapsePredetermined(SpecialDictionary<(int, int), TileType> predetermined)
+    private void CollapsePredetermined(SpecialDictionary<(int, int), MapNode> predetermined)
     {
         while (predetermined.Count > 0)
         {
-            ((int q, int r), TileType tileType) = predetermined.Pop();
-            CollapseNodeSpecific(q, r, tileType);
+            ((int q, int r), MapNode mapNode) = predetermined.Pop();
+            for(int i = 0; i < NUM_LAYERS; i++)
+            {
+                CollapseNodeSpecific(q, r, mapNode.Layers[i], i);
+            }
+            
         }
     }
 
-    private void Propagate(int q, int r)
+    private void Propagate(int q, int r, int layer)
     {
         Stack<(int, int)> nodesToEvaluate = new Stack<(int, int)>();
         nodesToEvaluate.Push((q, r));
@@ -107,52 +135,163 @@ public class WFCSolver
         while (nodesToEvaluate.Count != 0)
         {
             (q, r) = nodesToEvaluate.Pop();
-            TileType validAdjacentTiles = ComputeValidAdjacentTiles(_nodes[q, r]);
+            //Debug.Log($"({q}, {r}) in layer {layer} has value {_nodes[q, r].Layers[layer]}");
+            uint validAdjacent = ComputeValidAdjacent(_nodes[q, r].Layers[layer], layer);
             (int, int)[] neighBours = HexGrid.GetNeighboursAxial(q, r);
 
-            foreach((int q, int r) neighbour in neighBours)
+            foreach ((int q, int r) neighbour in neighBours)
             {
                 int qMin = HexGrid.QMin(neighbour.r);
                 if (MapHandler.Instance.IsValidAxial(neighbour.q, neighbour.r))
                 {
-                    PropagateNeighbour(neighbour.q, neighbour.r, validAdjacentTiles);
+                    PropagateNeighbour(neighbour.q, neighbour.r, validAdjacent);
                 }
             }
         }
 
-        void PropagateNeighbour(int q, int r, TileType tileMask)
+        void PropagateNeighbour(int q, int r, uint mask)
         {
-            TileType availableTiles = _nodes[q, r];
-            TileType maskedAvailableTiles = availableTiles & tileMask;
-
-            if(availableTiles != maskedAvailableTiles)
+            //Debug.Log("Propagate neighbour " + $"({q}, {r})");
+            uint available = _nodes[q, r].Layers[layer];
+            uint maskedAvailable = available & mask;
+            //Debug.Log("Mask: " + mask + " | Available: " + available + " | Masked available: " + maskedAvailable);
+            if (available != maskedAvailable)
             {
-                _nodes[q, r] = (TileType)maskedAvailableTiles;
+                _nodes[q, r].Layers[layer] = maskedAvailable;
+                if (!UpdateRelatedLayer(q, r, layer))
+                {
+                    throw new Exception("Could not update related layer");
+                }
                 nodesToEvaluate.Push((q, r));
             }
         }
     }
 
-    private TileType ComputeValidAdjacentTiles(TileType availableTiles)
+    private uint ComputeValidAdjacent(uint available, int layer)
     {
-        uint result = 0b00000000;
-        if ((availableTiles & TileType.OCEAN) != 0)      result |= OCEAN_RULES;
-        if ((availableTiles & TileType.COAST) != 0)      result |= COAST_RULES;
-        if ((availableTiles & TileType.GRASSLANDS) != 0) result |= GRASSLANDS_RULES;
-        if ((availableTiles & TileType.PLAINS) != 0)     result |= PLAINS_RULES;
-        if ((availableTiles & TileType.DESERT) != 0)     result |= DESERT_RULES;
-        return (TileType)result;
+        uint result = 0;
+        
+        for (int i = 0; i < GetTotalInLayer(layer); i++)
+        {
+            if (Bits.IsBitActive(available, i))
+            {
+                result |= GetNeighbourRuleFromBitIndex(i, layer);
+            }
+        }
+        //Debug.Log("Compute valid adjacent for available " + available + " in layer " + layer + " with result " + result);
+        return result;
     }
 
-    private int GetRandomAvailableTileType(uint n)
+    private uint GetRandomAvailable(uint n, int layer)
     {
         SpecialStack<int> stack = new SpecialStack<int>();
-        for(int i = 0; i < NUMBER_OF_TILETYPES; i++)
+        for(int i = 0; i < GetTotalInLayer(layer); i++)
         {
             if ((n & 1u << i) != 0) { stack.Push(i); }
         }
+        int index = stack.GetRandomElement();
+        return Bits.TwoToPowerOf(index);
+    }
 
-        return stack.GetRandomElement();
+    private int GetTotalInLayer(int layer)
+    {
+        switch(layer)
+        {
+            case 0:
+                return GameHandler.MapSettings.MaxElevation + 1;
+            case 1:
+                return Enum.GetNames(typeof(TileType)).Length - 1;
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
+    }
+
+    private uint GetElevationRule(int elevation)
+    {
+        uint asBitIndex = Bits.TwoToPowerOf(elevation);
+        return (asBitIndex << 2
+            | asBitIndex << 1
+            | asBitIndex
+            | asBitIndex >> 1
+            | asBitIndex >> 2) 
+            & (Bits.TwoToPowerOf(GameHandler.MapSettings.MaxElevation + 1) - 1);
+    }
+
+    private uint GetBitFromElevation(int elevation)
+    {
+        return Bits.TwoToPowerOf(elevation);
+    }
+
+    private uint GetValidTilesFromElevationMask(uint elevationMask)
+    {
+
+        uint result = 0;
+        for (int i = 0; i < GameHandler.MapSettings.MaxElevation + 1; i++)
+        {
+            if(Bits.IsBitActive(elevationMask, i))
+            {
+                result |= (uint)GameHandler.ElevationRules[i];
+            }
+        }
+        //Debug.Log("Valid tiles from mask " + elevationMask + " gave result " + result);
+        return result;
+    }
+
+    private uint GetValidElevationsFromTileMask(uint tileMask)
+    {
+        uint result = 0;
+        for(int i = 0; i < GameHandler.ElevationRules.Length; i++)
+        {
+            if (((uint)GameHandler.ElevationRules[i] & tileMask) != 0)
+            {
+                result |= GetBitFromElevation(i);
+            }
+        }
+        //Debug.Log("Valid Elevations from mask " + tileMask + " gave result " + result);
+        return result;
+    }
+
+    private uint GetNeighbourRuleFromBitIndex(int index, int layer)
+    {
+        switch (layer)
+        {
+            case 0:
+                return GetElevationRule(index);
+            case 1:
+                return (uint) GameHandler.TileRules[index].ValidNeighbours;
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
+    }
+
+    private bool UpdateRelatedLayer(int q, int r, int updatedLayer)
+    {
+        //Debug.Log("Update related in " + $"({q}, {r}) in layer " + updatedLayer);
+        uint updatedLayerAvailable = _nodes[q, r].Layers[updatedLayer];
+        uint layerToUpdateAvailable;
+        switch(updatedLayer)
+        {
+            case 0:
+                layerToUpdateAvailable = _nodes[q, r].Layers[1];
+                _nodes[q, r].Layers[1] &= GetValidTilesFromElevationMask(updatedLayerAvailable);
+                if (_nodes[q, r].Layers[1] != layerToUpdateAvailable)
+                {
+                    //Debug.Log("Propagate");
+                    Propagate(q, r, 1);
+                }
+                return true;
+            case 1:
+                layerToUpdateAvailable = _nodes[q, r].Layers[0];
+                _nodes[q, r].Layers[0] &= GetValidElevationsFromTileMask(updatedLayerAvailable);
+                if (_nodes[q, r].Layers[0] != layerToUpdateAvailable)
+                {
+                    //Debug.Log("Propagate");
+                    Propagate(q, r, 0);
+                }
+                return true;
+            default:
+                return false;
+        }
     }
 
     private class SpecialStack<T>
@@ -187,7 +326,7 @@ public class WFCSolver
             if (_head == null) throw new ArgumentOutOfRangeException();
             if (Count == 1) return Pop();
 
-            Random rnd = new Random();
+            System.Random rnd = new System.Random();
             int index = rnd.Next(0, Count);
             Node tmp = _head;
             Node prev = _head;

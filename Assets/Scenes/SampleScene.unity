@@ -168,14 +168,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GridObject
   width: 24
-  height: 20
+  height: 16
   cellSize: 10
-  tileInfos:
-  - {fileID: 11400000, guid: c3d02f26a7e49474089057c6d1c046a3, type: 2}
-  - {fileID: 11400000, guid: b8013f97d98683b449c7dc40eed9e5ce, type: 2}
-  - {fileID: 11400000, guid: d974871493ddd21498626920e551d2e9, type: 2}
-  - {fileID: 11400000, guid: a70c5a202d969d84693b19b184f25c38, type: 2}
-  - {fileID: 11400000, guid: 13096709239fc4244ae8fb74bc18ff25, type: 2}
+  maxElevation: 3
+  tileRules:
+  - {fileID: 11400000, guid: a449f9b1da0383541aa69ea9df590323, type: 2}
+  - {fileID: 11400000, guid: cf48b02382dd194489c96f59b930ad73, type: 2}
+  - {fileID: 11400000, guid: 13115d4c86214d44ab769b780a8c82e6, type: 2}
+  - {fileID: 11400000, guid: 81072f0b42dd3ca4b9a7d00de7933add, type: 2}
+  - {fileID: 11400000, guid: ffabef192d20bf94797eedf329189970, type: 2}
+  elevationRules:
+  - {fileID: 11400000, guid: f5f823be3b231434f95012ed2b663387, type: 2}
+  - {fileID: 11400000, guid: d54cb3a68b84e094cb8200ce84c4f112, type: 2}
 --- !u!1 &330585543
 GameObject:
   m_ObjectHideFlags: 0

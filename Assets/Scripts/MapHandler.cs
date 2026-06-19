@@ -1,5 +1,7 @@
+using BitwiseUtils;
 using HexagonUtils;
 using System;
+using UnityEditor;
 using UnityEngine;
 
 /*
@@ -11,12 +13,12 @@ using UnityEngine;
 [Flags]
 public enum TileType : uint
 {
-    ALL         = 0b00011111,
     OCEAN       = 0b00000001,
     COAST       = 0b00000010,
     GRASSLANDS  = 0b00000100,
     PLAINS      = 0b00001000,
-    DESERT      = 0b00010000
+    DESERT      = 0b00010000,
+    ALL         = 0b00011111
 }
 
 public class MapHandler
@@ -34,29 +36,47 @@ public class MapHandler
     /// Constructor for singleton instance.
     /// </summary>
     /// <param name="mapSettings"Settings that define the map></param>
-    private MapHandler(MapSettings mapSettings)
+    private MapHandler()
     {
         Instance = this;
+        MapSettings mapSettings = GameHandler.MapSettings;
         map = new MapTile[mapSettings.Width, mapSettings.Height];
-        WFCSolver wfc = new WFCSolver(mapSettings.Width, mapSettings.Height);
-        AxialIndexArray2D<TileType> tileMap = wfc.Solve();
-        pathfinding = new AStarSolver(tileMap);
-        GenerateGrid(mapSettings.Width, mapSettings.Height, mapSettings.CellSize, tileMap);
+        WFCSolver wfc = new WFCSolver();
+        AxialIndexArray2D<MapNode> mapNodes = wfc.Solve();
+        //pathfinding = new AStarSolver(mapNodes);
+        GenerateGrid(mapSettings.Width, mapSettings.Height, mapSettings.CellSize, mapNodes);
     }
 
     /// <summary>
     /// Creates a new Grid.
     /// </summary>
     /// <param name="mapSettings">Settings that define the map.</param>
-    public static bool Init(MapSettings mapSettings)
+    public static bool Init()
     {
         if(Instance == null)
         {
-            new MapHandler(mapSettings);
+            new MapHandler();
             return true;
         }
         return false;
     }
+
+    //public void Solve()
+    //{
+    //    wfcsolver.SolveContinuous();
+    //}
+
+    //public void UpdateTile(int x, int y, MapNode mapNode)
+    //{
+    //    MapTile mapTile = map[x, y];
+    //    MapTile newMapTile = new MapTile(x, y, GameHandler.MapSettings.CellSize, (TileType)mapNode.Layers[1], mapTile.gameObject.transform.parent);
+    //    GameObject tmObject = mapTile.gameObject.GetComponentInChildren<TextMesh>().gameObject;
+    //    tmObject.transform.parent = newMapTile.gameObject.transform;
+    //    tmObject.GetComponent<TextMesh>().text = mapNode.Layers[0].ToString();
+    //    GameObject.Destroy(mapTile.gameObject);
+    //    map[x, y] = newMapTile;
+
+    //}
 
     /// <summary>
     /// Returns the <see cref="TileType"/> at the given XY-coordinates using odd-r layout.
@@ -119,18 +139,18 @@ public class MapHandler
     /// <param name="width">Grid width in cells.</param>
     /// <param name="height">Grid height in cells.</param>
     /// <param name="cellSize">Size of each cell in map units.</param>
-    private void GenerateGrid(int width, int height, int cellSize, AxialIndexArray2D<TileType> tileTypes)
+    private void GenerateGrid(int width, int height, int cellSize, AxialIndexArray2D<MapNode> mapNodes)
     {
         // Create a parent GameObject to hold all tile GameObjects in the scene hierarchy.
         GameObject parent = new GameObject("Grid");
 
-        TileType[,] xyMap = tileTypes.ToArray();
+        MapNode[,] xyMap = mapNodes.ToArray();
 
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < height; y++)
             {
-                // Instantiate a GridTile with the resolved TileType and attach it to the parent transform.
+                // Instantiate a GridTile with the resolved PossibleTileTypes and attach it to the parent transform.
                 MapTile gridTile = new MapTile(x, y, cellSize, xyMap[x, y], parent.transform);
                 map[x, y] = gridTile;
             }
@@ -140,14 +160,16 @@ public class MapHandler
 
 public struct MapSettings
 {
-    public MapSettings(int width, int height, int cellSize)
+    public MapSettings(int width, int height, int cellSize, int maxElevation)
     {
         Width = width;
         Height = height;
         CellSize = cellSize;
+        MaxElevation = maxElevation;
     }
 
     public int Width { get; }
     public int Height { get; }
     public int CellSize { get; }
+    public int MaxElevation { get; }
 }
