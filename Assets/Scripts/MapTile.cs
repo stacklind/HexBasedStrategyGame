@@ -20,10 +20,9 @@ public class MapTile
         }
     }
 
-    public MapTile(int x, int y, int cellSize, TileType tileType, Transform parent)
+    public MapTile(int x, int y, int cellSize, uint tileType, Transform parent)
     {
-        // Determine the PossibleTileTypes index from the bitmask stored in xyMap.
-        int tileTypeIndex = BitwiseUtils.GetFirstActiveBitIndex((uint)tileType, GameHandler.TileRules.Length);
+        int tileTypeIndex = BitwiseUtils.GetFirstActiveBitIndex(tileType);
         TileInfo tileInfo = GameHandler.TileRules[tileTypeIndex].TileInfo;
 
         CreateGameObject(x, y, tileInfo.Prefab, parent);
@@ -31,7 +30,7 @@ public class MapTile
 
         _tileGOHandler = _gameObject.GetComponent<TileGOHandler>();
         Yield = tileInfo.Yield;
-        TileType = tileType;
+        TileType = (TileType)tileType;
     }
 
     private void CreateGameObject(int x, int y, GameObject prefab, Transform parent)

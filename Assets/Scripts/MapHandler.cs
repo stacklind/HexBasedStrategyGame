@@ -1,5 +1,7 @@
 using HexagonUtils;
 using System;
+using System.Linq;
+using Unity.VisualScripting;
 using UnityEngine;
 
 /*
@@ -38,10 +40,10 @@ public class MapHandler
         MapSettings mapSettings = GameHandler.MapSettings;
         Instance = this;
         map = new MapTile[mapSettings.Width, mapSettings.Height];
-        WFCSolver wfc = new WFCSolver(mapSettings.Width, mapSettings.Height);
-        AxialIndexArray2D<TileType> tileMap = wfc.Solve();
-        pathfinding = new AStarSolver(tileMap);
-        GenerateGrid(mapSettings.Width, mapSettings.Height, mapSettings.CellSize, tileMap);
+        WFCSolver wfc = new WFCSolver();
+        AxialIndexArray2D<MapNode> mapNodes = wfc.Solve();
+        //pathfinding = new AStarSolver(mapNodes);
+        GenerateGrid(mapSettings.Width, mapSettings.Height, mapSettings.CellSize, mapNodes);
     }
 
     /// <summary>
@@ -119,19 +121,20 @@ public class MapHandler
     /// <param name="width">Grid width in cells.</param>
     /// <param name="height">Grid height in cells.</param>
     /// <param name="cellSize">Size of each cell in map units.</param>
-    private void GenerateGrid(int width, int height, int cellSize, AxialIndexArray2D<TileType> tileTypes)
+    private void GenerateGrid(int width, int height, int cellSize, AxialIndexArray2D<MapNode> mapNodes)
     {
         // Create a parent GameObject to hold all tile GameObjects in the scene hierarchy.
         GameObject parent = new GameObject("Grid");
 
-        TileType[,] xyMap = tileTypes.ToArray();
+        MapNode[,] xyMap = mapNodes.ToArray();
+        Debug.Log("MapNodeArray length = " + xyMap.GetLength(0) + ", " + xyMap.GetLength(1));
 
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < height; y++)
             {
                 // Instantiate a GridTile with the resolved PossibleTileTypes and attach it to the parent transform.
-                MapTile gridTile = new MapTile(x, y, cellSize, xyMap[x, y], parent.transform);
+                MapTile gridTile = new MapTile(x, y, cellSize, xyMap[x, y].TileType, parent.transform);
                 map[x, y] = gridTile;
             }
         }
