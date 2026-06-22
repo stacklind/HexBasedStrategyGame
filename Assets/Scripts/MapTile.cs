@@ -20,18 +20,19 @@ public class MapTile
         }
     }
 
-    public MapTile(int x, int y, int cellSize, TileType tileType, Transform parent)
+    public MapTile(int x, int y, int cellSize, MapNode mapNode, Transform parent)
     {
-        // Determine the TileType index from the bitmask stored in xyMap.
-        int tileTypeIndex = BitwiseUtils.GetFirstActiveBitIndex((uint)tileType, GameHandler.TileInfos.Length);
-        TileInfo tileInfo = GameHandler.TileInfos[tileTypeIndex];
+        int tileTypeIndex = BitwiseUtils.GetFirstActiveBitIndex(mapNode.TileType);
+        TileInfo tileInfo = GameHandler.TileRules[tileTypeIndex].TileInfo;
+
+        int z = BitwiseUtils.GetFirstActiveBitIndex(mapNode.Elevation);
 
         CreateGameObject(x, y, tileInfo.Prefab, parent);
-        SetupGameObjectTransform(x, y, new HexInfo(cellSize));
+        SetupGameObjectTransform(x, y, z, new HexInfo(cellSize));
 
         _tileGOHandler = _gameObject.GetComponent<TileGOHandler>();
         Yield = tileInfo.Yield;
-        TileType = tileType;
+        TileType = (TileType)mapNode.TileType;
     }
 
     private void CreateGameObject(int x, int y, GameObject prefab, Transform parent)
@@ -40,11 +41,11 @@ public class MapTile
         _gameObject.name = $"{x}, {y}";
     }
 
-    private void SetupGameObjectTransform(int x, int y, HexInfo hex)
+    private void SetupGameObjectTransform(int x, int y, int z, HexInfo hex)
     {
         float worldXCoord = x * hex.Width + (y % 2 * 0.5f * hex.Width); // Offset the x-position of the tile every other row
         float worldYCoord = y * 0.75f * hex.Height;
-        _gameObject.transform.localPosition = new Vector3(worldXCoord, 0, worldYCoord);
+        _gameObject.transform.localPosition = new Vector3(worldXCoord, z, worldYCoord);
     }
 }
 

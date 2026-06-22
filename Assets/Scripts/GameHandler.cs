@@ -18,8 +18,6 @@ public class GameHandler : MonoBehaviour
     private int maxElevation = 3;
     [SerializeField]
     private TileRule[] tileRules;
-    [SerializeField]
-    private ElevationRule[] elevationRules;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     private void Start()
@@ -31,22 +29,6 @@ public class GameHandler : MonoBehaviour
             maxElevation);
 
         TileRules = tileRules;
-        SetupElevationRules();
         MapHandler.Init();
-    }
-
-    private void SetupElevationRules()
-    {
-        ElevationRules = new TileType[maxElevation + 1];
-        for (int i = 0; i < elevationRules.Length; i++)
-        {
-            int minEle = elevationRules[i].MinElevation;
-            int maxEle = elevationRules[i].MaxElevation > maxElevation ? maxElevation : elevationRules[i].MaxElevation;
-            while (minEle <= maxEle)
-            {
-                ElevationRules[minEle] |= elevationRules[i].ValidTileTypes;
-                minEle++;
-            }
-        }
     }
 }
