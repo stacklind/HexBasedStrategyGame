@@ -1,7 +1,7 @@
 using HexagonUtils;
 using System;
+using System.Collections.Generic;
 using System.Linq;
-using Unity.VisualScripting;
 using UnityEngine;
 
 /*
@@ -128,15 +128,81 @@ public class MapHandler
 
         MapNode[,] xyMap = mapNodes.ToArray();
 
+        HexInfo hexInfo = new HexInfo(cellSize);
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < height; y++)
             {
                 // Instantiate a GridTile with the resolved PossibleTileTypes and attach it to the parent transform.
-                MapTile gridTile = new MapTile(x, y, cellSize, xyMap[x, y], parent.transform);
-                map[x, y] = gridTile;
+                //MapTile gridTile = new MapTile(x, y, cellSize, xyMap[x, y], parent.transform);
+                //map[x, y] = gridTile;
+                
             }
         }
+    }
+
+    private void Test()
+    {
+        GameObject parent = new GameObject("parent", typeof(MeshRenderer), typeof(MeshFilter));
+        for(int x = 0; x < 2; x++)
+        {
+            for (int y = 0; y < 2; y++)
+            {
+                GameObject go = new GameObject($"Tile({x},{y})", typeof(MeshRenderer), typeof(MeshFilter));
+                go.transform.parent = parent.transform;
+                Mesh mesh = new Mesh();
+                mesh.vertices = new Vector3[4]
+                {
+            new Vector3(x * 10, 0, y * 10),
+            new Vector3(x * 10, 0, y * 10 + 10),
+            new Vector3(x * 10 + 10, 0, y * 10 + 10),
+            new Vector3(x * 10 + 10, 0, y * 10)
+                };
+                mesh.triangles = new int[6]
+                {
+            0, 1, 2,
+            2, 3, 0
+                };
+                mesh.normals = new Vector3[4]
+                {
+            Vector3.up,
+            Vector3.up,
+            Vector3.up,
+            Vector3.up
+                };
+                mesh.uv = new Vector2[4]
+                {
+            new Vector2(0, 0),
+            new Vector2(1, 0),
+            new Vector2(1, 1),
+            new Vector2(0, 1)
+                };
+                go.GetComponent<MeshFilter>().mesh = mesh;
+            }
+        }
+
+        MeshFilter[] meshFilters = parent.GetComponentsInChildren<MeshFilter>();
+        CombineInstance[] instances = new CombineInstance[meshFilters.Length - 1];
+        for (int i = 1; i < meshFilters.Length; i++)
+        {
+            instances[i-1] = new CombineInstance()
+            {
+                mesh = meshFilters[i].mesh,
+                transform = meshFilters[i].transform.localToWorldMatrix
+            };
+            meshFilters[i].gameObject.SetActive(false);
+        }
+        Mesh combinedMesh = new Mesh();
+        combinedMesh.CombineMeshes(instances, false);
+        MeshFilter parentMesh = parent.GetComponent<MeshFilter>();
+        parentMesh.mesh = combinedMesh;
+        Debug.Log("Total verts = " + parentMesh.mesh.vertexCount);
+        string vertString = "";
+        foreach (Vector3 vert in parentMesh.mesh.vertices)
+        {
+            vertString += vert.ToString() + "\n";
+        }
+        Debug.Log(vertString);
     }
 }
 
