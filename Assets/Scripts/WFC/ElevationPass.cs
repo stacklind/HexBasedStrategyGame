@@ -52,7 +52,6 @@ public class ElevationPass : WFCPass
         int index = BitwiseUtils.GetRandomActiveIndex(available);
         uint result = available & 1u << index;
         nodes[q, r].Elevation = result;
-        Debug.Log("Set result to " + result);
         Propagate(q, r);
     }
 
