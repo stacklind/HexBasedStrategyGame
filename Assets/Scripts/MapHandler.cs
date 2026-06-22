@@ -127,14 +127,13 @@ public class MapHandler
         GameObject parent = new GameObject("Grid");
 
         MapNode[,] xyMap = mapNodes.ToArray();
-        Debug.Log("MapNodeArray length = " + xyMap.GetLength(0) + ", " + xyMap.GetLength(1));
 
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < height; y++)
             {
                 // Instantiate a GridTile with the resolved PossibleTileTypes and attach it to the parent transform.
-                MapTile gridTile = new MapTile(x, y, cellSize, xyMap[x, y].TileType, parent.transform);
+                MapTile gridTile = new MapTile(x, y, cellSize, xyMap[x, y], parent.transform);
                 map[x, y] = gridTile;
             }
         }

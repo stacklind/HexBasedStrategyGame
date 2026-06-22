@@ -14,3 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TileRule
   tileInfo: {fileID: 11400000, guid: d974871493ddd21498626920e551d2e9, type: 2}
   validNeighbours: 14
+  minElevation: 1
+  maxElevation: 6

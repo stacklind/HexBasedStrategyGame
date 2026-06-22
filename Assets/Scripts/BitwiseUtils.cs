@@ -32,9 +32,20 @@ public class BitwiseUtils
         return TwoToPowerOf(numberOfBits) - 1;
     }
 
+    public static uint SetActiveBetween(int minInclusive, int maxInclusive)
+    {
+        uint result = 0;
+        for(int i = minInclusive; i <= maxInclusive; i++)
+        {
+            result |= 1u << i;
+        }
+
+        return result;
+    }
+
     public static uint TwoToPowerOf(int i)
     {
-        return 1u << (i + 1);
+        return 1u << i;
     }
 
     public static int GetBitLength(uint n)

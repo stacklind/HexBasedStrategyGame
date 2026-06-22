@@ -13,4 +13,6 @@ MonoBehaviour:
   m_Name: CoastRule
   m_EditorClassIdentifier: Assembly-CSharp::TileRule
   tileInfo: {fileID: 11400000, guid: b8013f97d98683b449c7dc40eed9e5ce, type: 2}
-  validNeighbours: 7
+  validNeighbours: 15
+  minElevation: 0
+  maxElevation: 0

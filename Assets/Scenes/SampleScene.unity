@@ -170,12 +170,13 @@ MonoBehaviour:
   width: 24
   height: 20
   cellSize: 10
-  tileInfos:
-  - {fileID: 11400000, guid: c3d02f26a7e49474089057c6d1c046a3, type: 2}
-  - {fileID: 11400000, guid: b8013f97d98683b449c7dc40eed9e5ce, type: 2}
-  - {fileID: 11400000, guid: d974871493ddd21498626920e551d2e9, type: 2}
-  - {fileID: 11400000, guid: a70c5a202d969d84693b19b184f25c38, type: 2}
-  - {fileID: 11400000, guid: 13096709239fc4244ae8fb74bc18ff25, type: 2}
+  maxElevation: 3
+  tileRules:
+  - {fileID: 11400000, guid: cba79d43093f9ea45883f892d3b2be55, type: 2}
+  - {fileID: 11400000, guid: 4711389741c08d14cb9e5a2f804ccd62, type: 2}
+  - {fileID: 11400000, guid: 516a7453e199890489be8ac5637cbd53, type: 2}
+  - {fileID: 11400000, guid: 3d45b594fc4a14948935a4ab6f1b5196, type: 2}
+  - {fileID: 11400000, guid: f9c9c77e78a78004da0c305f3cf0f0b1, type: 2}
 --- !u!1 &330585543
 GameObject:
   m_ObjectHideFlags: 0

@@ -7,10 +7,12 @@ public class WFCSolver
     public AxialIndexArray2D<MapNode> Solve()
     {
         AxialIndexArray2D<MapNode> nodes = PrepareNodes(GameHandler.MapSettings.Width, GameHandler.MapSettings.Height);
-        TilePass tp = new TilePass(nodes);
         MapNode[] predetermined = MakePredeterminedTiles();
+        TilePass tp = new TilePass(nodes);
         TilePassResult tilePassResult = (TilePassResult)tp.DoPass(predetermined);
-        return tilePassResult.Nodes;
+        ElevationPass ep = new ElevationPass(tilePassResult.Nodes);
+        ElevationPassResult elevationPassResult = (ElevationPassResult)ep.DoPass(new MapNode[0]);
+        return elevationPassResult.Nodes;
     }
     private AxialIndexArray2D<MapNode> PrepareNodes(int width, int height)
     {
