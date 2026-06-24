@@ -117,9 +117,9 @@ public class MapHandler
         return IsValidAxial(axial.q, axial.r);
     }
 
-    public (int q, int r)[] GetNeighbourAxials(int q, int r)
+    public (int, int)[] GetNeighbourAxials(int q, int r)
     {
-        (int, int)[] neighbourModifiers = new (int, int)[6]
+        (int q, int r)[] neighbourModifiers = new (int, int)[6]
         {
             (0, -1),
             (-1, 0),
@@ -128,13 +128,13 @@ public class MapHandler
             (1, 0),
             (1, -1)
         };
-        Queue<(int q, int r)> neighbours = new Queue<(int q, int r)>();
-        foreach ((int q, int r) direction in neighbourModifiers)
+        (int, int)[] neighbours = new (int, int)[neighbourModifiers.Length];
+        for(int i = 0; i < neighbourModifiers.Length; i++)
         {
-            neighbours.Enqueue((q + direction.q, r + direction.r));
+            neighbours[i] = (q + neighbourModifiers[i].q, r + neighbourModifiers[i].r);
         }
 
-        return neighbours.ToArray();
+        return neighbours;
     }
 
     /// <summary>
