@@ -1,6 +1,5 @@
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.XR;
 
 public class MeshGenerator
 {
@@ -17,7 +16,7 @@ public class MeshGenerator
     public static void GenerateAndSaveMesh(MeshInfo meshInfo, string path)
     {
         Mesh mesh = GenerateMesh(meshInfo);
-        AssetDatabase.CreateAsset(mesh, $"{path}{meshInfo.Name}.mesh");
+        AssetDatabase.CreateAsset(mesh, $"{path}/{meshInfo.Name}.mesh");
     }
 }
 

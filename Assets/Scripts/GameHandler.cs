@@ -1,3 +1,4 @@
+using HexagonUtils;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -6,6 +7,8 @@ public class GameHandler : MonoBehaviour
     public static TileRule[] TileRules;
     public static TileType[] ElevationRules;
     public static MapSettings MapSettings;
+    public static HexInfo HexInfo;
+    public static Material[] TileMaterials;
 
     [Header("World")]
     [SerializeField]
@@ -18,6 +21,8 @@ public class GameHandler : MonoBehaviour
     private int maxElevation = 3;
     [SerializeField]
     private TileRule[] tileRules;
+    [SerializeField]
+    private Material[] tileMaterials;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     private void Start()
@@ -29,6 +34,8 @@ public class GameHandler : MonoBehaviour
             maxElevation);
 
         TileRules = tileRules;
+        HexInfo = new HexInfo(cellSize);
+        TileMaterials = tileMaterials;
         MapHandler.Init();
     }
 }

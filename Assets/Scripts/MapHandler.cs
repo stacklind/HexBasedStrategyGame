@@ -27,7 +27,7 @@ public class MapHandler
     /// </summary>
     public static MapHandler Instance { get; private set; }
 
-    // 2D array of instantiated MapTile objects indexed by XY grid coordinates.
+    private AxialIndexArray2D<MapNode> mapNodes;
     private MapTile[,] map;
     private AStarSolver pathfinding;
 
@@ -41,9 +41,10 @@ public class MapHandler
         Instance = this;
         map = new MapTile[mapSettings.Width, mapSettings.Height];
         WFCSolver wfc = new WFCSolver();
-        AxialIndexArray2D<MapNode> mapNodes = wfc.Solve();
+        mapNodes = wfc.Solve();
         //pathfinding = new AStarSolver(mapNodes);
-        GenerateGrid(mapSettings.Width, mapSettings.Height, mapSettings.CellSize, mapNodes);
+        //MeshGenerator.GenerateAndSaveMesh(Hexagon.GetMeshInfo(GameHandler.HexInfo.Width, GameHandler.HexInfo.Height), "Assets/Meshes");
+        GenerateMap(mapSettings.Width, mapSettings.Height);
     }
 
     /// <summary>
@@ -96,8 +97,9 @@ public class MapHandler
     /// <param name="x">X coordinate (row).</param>
     /// <param name="y">Y coordinate (column).</param>
     /// <returns>The <see cref="GridTile"/> instance stored at [x,y].</returns>
-    public MapTile GetGridTileFromGridXY(int x, int y) => map[x, y];
-    public MapTile GetGridTileFromGridXY((int x, int y) coords) => map[coords.x, coords.y];
+    public MapTile GetMapTileFromXY(int x, int y) => map[x, y];
+    public MapTile GetMapTileFromXY((int x, int y) coords) => map[coords.x, coords.y];
+    public MapNode GetMapNodeFromAxial(int q, int r) => mapNodes[q, r];
 
     public bool FindShortestPath((int x, int y) from, (int x, int y) to, Func<TileType, bool> isWalkable, out MapTile[] path)
     {
@@ -115,94 +117,96 @@ public class MapHandler
         return IsValidAxial(axial.q, axial.r);
     }
 
+    public (int q, int r)[] GetNeighbourAxials(int q, int r)
+    {
+        (int, int)[] neighbourModifiers = new (int, int)[6]
+        {
+            (0, -1),
+            (-1, 0),
+            (-1, 1),
+            (0, 1),
+            (1, 0),
+            (1, -1)
+        };
+        Queue<(int q, int r)> neighbours = new Queue<(int q, int r)>();
+        foreach ((int q, int r) direction in neighbourModifiers)
+        {
+            neighbours.Enqueue((q + direction.q, r + direction.r));
+        }
+
+        return neighbours.ToArray();
+    }
+
     /// <summary>
     /// Instantiates the grid GameObject parent and creates GridTile objects for each cell.
     /// </summary>
     /// <param name="width">Grid width in cells.</param>
     /// <param name="height">Grid height in cells.</param>
     /// <param name="cellSize">Size of each cell in map units.</param>
-    private void GenerateGrid(int width, int height, int cellSize, AxialIndexArray2D<MapNode> mapNodes)
+    private void GenerateMap(int width, int height)
     {
         // Create a parent GameObject to hold all tile GameObjects in the scene hierarchy.
-        GameObject parent = new GameObject("Grid");
+        GameObject parent = new GameObject("Map");
 
         MapNode[,] xyMap = mapNodes.ToArray();
 
-        HexInfo hexInfo = new HexInfo(cellSize);
+        Dictionary<TileType,List<MeshFilter>> meshLists = new Dictionary<TileType, List<MeshFilter>>();
+        for(uint i = 1u; i < (uint)TileType.ALL; i<<=1)
+        {
+            meshLists.Add((TileType)i, new List<MeshFilter>());
+        }
+
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < height; y++)
             {
                 // Instantiate a GridTile with the resolved PossibleTileTypes and attach it to the parent transform.
-                //MapTile gridTile = new MapTile(x, y, cellSize, xyMap[x, y], parent.transform);
-                //map[x, y] = gridTile;
-                
+                MapTile mapTile = new MapTile(x, y, xyMap[x, y], parent.transform);
+                map[x, y] = mapTile;
+                meshLists[mapTile.TileType].Add(mapTile.gameObject.GetComponent<TileGOHandler>().GetMeshFilter());
             }
         }
+        CombineMeshes(parent, meshLists.Values.ToArray());
     }
 
-    private void Test()
+    private void CombineMeshes(GameObject parent, List<MeshFilter>[] meshFiltersByTileType)
     {
-        GameObject parent = new GameObject("parent", typeof(MeshRenderer), typeof(MeshFilter));
-        for(int x = 0; x < 2; x++)
+        CombineInstance[] combineInstances;
+        MeshFilter[] meshFilters;
+        Debug.Log(meshFiltersByTileType.Length);
+        CombineInstance[] finalCombineInstances = new CombineInstance[meshFiltersByTileType.Length];
+
+        for (int i = 0; i < meshFiltersByTileType.Length; i++)
         {
-            for (int y = 0; y < 2; y++)
+            meshFilters = meshFiltersByTileType[i].ToArray();
+            combineInstances = new CombineInstance[meshFilters.Length];
+            for (int j = 0; j < meshFilters.Length; j++)
             {
-                GameObject go = new GameObject($"Tile({x},{y})", typeof(MeshRenderer), typeof(MeshFilter));
-                go.transform.parent = parent.transform;
-                Mesh mesh = new Mesh();
-                mesh.vertices = new Vector3[4]
+                combineInstances[j] = new CombineInstance()
                 {
-            new Vector3(x * 10, 0, y * 10),
-            new Vector3(x * 10, 0, y * 10 + 10),
-            new Vector3(x * 10 + 10, 0, y * 10 + 10),
-            new Vector3(x * 10 + 10, 0, y * 10)
+                    mesh = meshFilters[j].mesh,
+                    transform = meshFilters[j].gameObject.transform.localToWorldMatrix
                 };
-                mesh.triangles = new int[6]
-                {
-            0, 1, 2,
-            2, 3, 0
-                };
-                mesh.normals = new Vector3[4]
-                {
-            Vector3.up,
-            Vector3.up,
-            Vector3.up,
-            Vector3.up
-                };
-                mesh.uv = new Vector2[4]
-                {
-            new Vector2(0, 0),
-            new Vector2(1, 0),
-            new Vector2(1, 1),
-            new Vector2(0, 1)
-                };
-                go.GetComponent<MeshFilter>().mesh = mesh;
+                meshFilters[j].gameObject.SetActive(false);
             }
+            Mesh combinedMesh = new Mesh();
+            combinedMesh.CombineMeshes(combineInstances);
+            finalCombineInstances[i] = new CombineInstance()
+            {
+                mesh = combinedMesh,
+            };
         }
 
-        MeshFilter[] meshFilters = parent.GetComponentsInChildren<MeshFilter>();
-        CombineInstance[] instances = new CombineInstance[meshFilters.Length - 1];
-        for (int i = 1; i < meshFilters.Length; i++)
-        {
-            instances[i-1] = new CombineInstance()
-            {
-                mesh = meshFilters[i].mesh,
-                transform = meshFilters[i].transform.localToWorldMatrix
-            };
-            meshFilters[i].gameObject.SetActive(false);
-        }
-        Mesh combinedMesh = new Mesh();
-        combinedMesh.CombineMeshes(instances, false);
-        MeshFilter parentMesh = parent.GetComponent<MeshFilter>();
-        parentMesh.mesh = combinedMesh;
-        Debug.Log("Total verts = " + parentMesh.mesh.vertexCount);
-        string vertString = "";
-        foreach (Vector3 vert in parentMesh.mesh.vertices)
-        {
-            vertString += vert.ToString() + "\n";
-        }
-        Debug.Log(vertString);
+        MeshFilter parentMeshFilter = parent.AddComponent<MeshFilter>();
+        Mesh parentMesh = new Mesh();
+        parentMesh.CombineMeshes(finalCombineInstances, false, false);
+        parentMeshFilter.mesh = parentMesh;
+
+        MeshRenderer parentMeshRenderer = parent.AddComponent<MeshRenderer>();
+        parentMeshRenderer.materials = GameHandler.TileMaterials;
+
+        Debug.Log(parentMeshFilter.mesh.vertexCount);
+        Debug.Log(parentMeshFilter.mesh.GetSubMesh(0).vertexCount);
     }
 }
 

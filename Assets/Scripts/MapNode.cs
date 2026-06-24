@@ -6,7 +6,7 @@ public class MapNode
     public readonly int R;
     public readonly (int q, int r) Coords;
     public uint TileType;
-    public uint Elevation;
+    public uint ElevationRaw;
 
     public MapNode((int q, int r) coords, uint tileType, uint elevation)
     {
@@ -14,7 +14,7 @@ public class MapNode
         R = coords.r;
         Coords = coords;
         TileType = tileType;
-        Elevation = elevation;
+        ElevationRaw = elevation;
     }
     public MapNode(int q, int r, uint tileType, uint elevation)
     {
@@ -22,6 +22,11 @@ public class MapNode
         R = r;
         Coords = (q, r);
         TileType = tileType;
-        Elevation = elevation;
+        ElevationRaw = elevation;
+    }
+
+    public int GetElevation()
+    {
+        return BitwiseUtils.GetFirstActiveBitIndex(ElevationRaw);
     }
 }
