@@ -54,7 +54,7 @@ public class MapTile
         int outerVertStartIndex = 7;
         MeshFilter meshFilter = _gameObject.GetComponent<TileGOHandler>().GetMeshFilter();
         Vector3[] vertices = meshFilter.mesh.vertices;
-        int[] outerElevation = GetOuterElevations(x, y);
+        int[] outerElevation = GetElevationMidPoints(x, y);
         if (vertices.Length - outerElevation.Length != outerVertStartIndex)
         {
             throw new ArgumentOutOfRangeException($"Something wrong with vertices in object ({x}, {y}).");
@@ -64,6 +64,8 @@ public class MapTile
             vertices[i] = vertices[i] + new Vector3(0, outerElevation[i - outerVertStartIndex], 0);
         }
         meshFilter.mesh.vertices = vertices;
+        meshFilter.mesh.RecalculateNormals();
+        meshFilter.mesh.RecalculateTangents();
     }
 
     private int[] GetOuterElevations(int x, int y)
@@ -148,9 +150,8 @@ public class MapTile
             {
                 otherNeighbourElevation = thisElevation;
             }
-
-            corner = (neighbourElevation + otherNeighbourElevation + thisElevation) / 3;
-            edge = (thisElevation + neighbourElevation) / 2;
+            corner = (thisElevation + neighbourElevation + otherNeighbourElevation) / 3 - thisElevation;
+            edge = (neighbourElevation + thisElevation) / 2 - thisElevation;
             elevationMidPoints[i * 2] = corner;
             elevationMidPoints[i * 2 + 1] = edge;
         }
