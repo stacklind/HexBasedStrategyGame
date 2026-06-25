@@ -22,7 +22,7 @@ public class ElevationPass : WFCPass
         {
             (int q, int r) = node.Coords;
             int index = BitwiseUtils.GetFirstActiveBitIndex(node.TileType);
-            nodes[q, r].Elevation = sameRules[index];
+            nodes[q, r].ElevationRaw = sameRules[index];
             if (((TileType)node.TileType & (TileType.OCEAN | TileType.COAST)) != 0)
             {
                 predeterminedStack.Push(node.Coords);
@@ -40,18 +40,18 @@ public class ElevationPass : WFCPass
         while (predeterminedStack.Count > 0)
         {
             (int q, int r) = predeterminedStack.Pop();
-            nodes[q, r].Elevation = BitwiseUtils.TwoToPowerOf(0);
+            nodes[q, r].ElevationRaw = BitwiseUtils.TwoToPowerOf(0);
             Propagate(q, r);
         }
     }
 
     protected override void CollapseNode(int q, int r)
     {
-        uint available = nodes[q, r].Elevation;
+        uint available = nodes[q, r].ElevationRaw;
         if (BitwiseUtils.CountActiveBits(available) == 1) return;
         int index = BitwiseUtils.GetRandomActiveIndex(available);
         uint result = available & 1u << index;
-        nodes[q, r].Elevation = result;
+        nodes[q, r].ElevationRaw = result;
         Propagate(q, r);
     }
 
@@ -63,7 +63,7 @@ public class ElevationPass : WFCPass
         while (nodesToEvaluate.Count != 0)
         {
             (q, r) = nodesToEvaluate.Pop();
-            uint validAdjacent = GetAvailableAdjacentMask(nodes[q, r].Elevation, types, neighbourRules);
+            uint validAdjacent = GetAvailableAdjacentMask(nodes[q, r].ElevationRaw, types, neighbourRules);
             (int, int)[] neighBours = HexGrid.GetNeighboursAxial(q, r);
 
             foreach ((int q, int r) neighbour in neighBours)
@@ -78,12 +78,12 @@ public class ElevationPass : WFCPass
 
         void PropagateNeighbour(int q, int r, uint tileMask)
         {
-            uint availableTiles = nodes[q, r].Elevation;
+            uint availableTiles = nodes[q, r].ElevationRaw;
             uint maskedAvailableTiles = availableTiles & tileMask;
 
             if (availableTiles != maskedAvailableTiles)
             {
-                nodes[q, r].Elevation = maskedAvailableTiles;
+                nodes[q, r].ElevationRaw = maskedAvailableTiles;
                 nodesToEvaluate.Push((q, r));
             }
         }

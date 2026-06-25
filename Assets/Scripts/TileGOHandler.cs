@@ -9,6 +9,13 @@ public class TileGOHandler : MonoBehaviour
 
     [SerializeField]
     TextMeshPro yieldText;
+    [SerializeField]
+    MeshFilter meshFilter;
+
+    public MeshFilter GetMeshFilter()
+    {
+        return meshFilter;
+    }
 
     public void UpdateYieldText(Yield yield)
     {

@@ -3,14 +3,20 @@ using UnityEngine;
 
 public class MeshGenerator
 {
-    public static void GenerateMesh(MeshInfo meshInfo, string path)
+    public static Mesh GenerateMesh(MeshInfo meshInfo)
     {
         Mesh mesh = new Mesh();
         mesh.vertices = meshInfo.Vertices;
         mesh.triangles = meshInfo.Tris;
         mesh.normals = meshInfo.Normals;
         mesh.uv = meshInfo.UV;
-        AssetDatabase.CreateAsset(mesh, $"{path}{meshInfo.Name}.mesh");
+        return mesh;
+    }
+
+    public static void GenerateAndSaveMesh(MeshInfo meshInfo, string path)
+    {
+        Mesh mesh = GenerateMesh(meshInfo);
+        AssetDatabase.CreateAsset(mesh, $"{path}/{meshInfo.Name}.mesh");
     }
 }
 

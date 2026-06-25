@@ -66,11 +66,11 @@ public class AStarSolver
     private MapTile[] ReconstructPath(Dictionary<(int q, int r), (int q, int r)> cameFrom, (int q, int r) current)
     {
         Stack<MapTile> path = new Stack<MapTile>();
-        path.Push(MapHandler.Instance.GetGridTileFromGridXY(HexGrid.AxialToOddR(current)));
+        path.Push(MapHandler.Instance.GetMapTileFromXY(HexGrid.AxialToOddR(current)));
         while(cameFrom.ContainsKey(current))
         {
             current = cameFrom[current];
-            path.Push(MapHandler.Instance.GetGridTileFromGridXY(HexGrid.AxialToOddR(current)));
+            path.Push(MapHandler.Instance.GetMapTileFromXY(HexGrid.AxialToOddR(current)));
         }
         return path.ToArray();
     }
