@@ -38,4 +38,22 @@ public class GameHandler : MonoBehaviour
         TileMaterials = tileMaterials;
         MapHandler.Init();
     }
+
+    [ContextMenu("Generate Map")]
+    private void GenerateEditorMap()
+    {
+        if(Application.isEditor && !Application.isPlaying)
+        {
+            MapSettings = new MapSettings(
+            width,
+            height,
+            cellSize,
+            maxElevation);
+
+            TileRules = tileRules;
+            HexInfo = new HexInfo(cellSize);
+            TileMaterials = tileMaterials;
+            MapHandler.Reinit();
+        }
+    }
 }

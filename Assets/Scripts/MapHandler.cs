@@ -61,6 +61,12 @@ public class MapHandler
         return false;
     }
 
+    public static bool Reinit()
+    {
+        new MapHandler();
+        return true;
+    }
+
     /// <summary>
     /// Returns the <see cref="TileType"/> at the given XY-coordinates using odd-r layout.
     /// </summary>
@@ -147,7 +153,6 @@ public class MapHandler
     {
         // Create a parent GameObject to hold all tile GameObjects in the scene hierarchy.
         GameObject parent = new GameObject("Map");
-
         MapNode[,] xyMap = mapNodes.ToArray();
 
         Dictionary<TileType,List<MeshFilter>> meshLists = new Dictionary<TileType, List<MeshFilter>>();
