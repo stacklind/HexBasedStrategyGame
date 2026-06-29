@@ -27,18 +27,11 @@ public class MapHandler
     private AxialIndexArray2D<MapNode> mapNodes;
     private MapTile[,] map;
     private AStarSolver pathfinding;
-    private List<MapTile>[] ownedTiles;
     
     private MapHandler()
     {
         Instance = this;
         MapSettings mapSettings = GameHandler.MapSettings;
-
-        ownedTiles = new List<MapTile>[mapSettings.StartingPlayers];
-        for(int i = 0; i < ownedTiles.Length; i++)
-        {
-            ownedTiles[i] = new List<MapTile>();
-        }
 
         map = new MapTile[mapSettings.Width, mapSettings.Height];
         WFCSolver wfc = new WFCSolver();
@@ -188,18 +181,16 @@ public class MapHandler
 
 public struct MapSettings
 {
-    public MapSettings(int width, int height, int cellSize, int maxElevation, int startingPlayers)
+    public MapSettings(int width, int height, int cellSize, int maxElevation)
     {
         Width = width;
         Height = height;
         CellSize = cellSize;
         MaxElevation = maxElevation;
-        StartingPlayers = startingPlayers;
     }
 
     public int Width { get; }
     public int Height { get; }
     public int CellSize { get; }
     public int MaxElevation { get; }
-    public int StartingPlayers { get; }
 }

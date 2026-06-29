@@ -34,14 +34,12 @@ public class GameHandler : MonoBehaviour
             width,
             height,
             cellSize,
-            maxElevation,
-            2);
+            maxElevation);
 
         TileRules = tileRules;
         HexInfo = new HexInfo(cellSize);
         TileMaterials = tileMaterials;
         MapHandler.Init();
-        PlayerHandler.Init(playerPrefab);
     }
 
     [ContextMenu("Generate Map")]
@@ -53,8 +51,7 @@ public class GameHandler : MonoBehaviour
             width,
             height,
             cellSize,
-            maxElevation,
-            2);
+            maxElevation);
 
             TileRules = tileRules;
             HexInfo = new HexInfo(cellSize);
