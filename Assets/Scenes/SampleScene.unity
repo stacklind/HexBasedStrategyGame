@@ -183,6 +183,7 @@ MonoBehaviour:
   - {fileID: 2100000, guid: 181e3767dee89bd419d8097d60d0ca7d, type: 2}
   - {fileID: 2100000, guid: 3552a7d17945bff44babdab5f246c5de, type: 2}
   - {fileID: 2100000, guid: ee065f802010522469569e58d535a572, type: 2}
+  playerPrefab: {fileID: 3601841725361928696, guid: 9b2e3f4735043674fa26b1cdf0e38c11, type: 3}
 --- !u!1 &330585543
 GameObject:
   m_ObjectHideFlags: 0

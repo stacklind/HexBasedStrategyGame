@@ -23,6 +23,9 @@ public class GameHandler : MonoBehaviour
     private TileRule[] tileRules;
     [SerializeField]
     private Material[] tileMaterials;
+    [Header("Players")]
+    [SerializeField]
+    private GameObject playerPrefab;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     private void Start()
@@ -31,12 +34,14 @@ public class GameHandler : MonoBehaviour
             width,
             height,
             cellSize,
-            maxElevation);
+            maxElevation,
+            2);
 
         TileRules = tileRules;
         HexInfo = new HexInfo(cellSize);
         TileMaterials = tileMaterials;
         MapHandler.Init();
+        PlayerHandler.Init(playerPrefab);
     }
 
     [ContextMenu("Generate Map")]
@@ -48,7 +53,8 @@ public class GameHandler : MonoBehaviour
             width,
             height,
             cellSize,
-            maxElevation);
+            maxElevation,
+            2);
 
             TileRules = tileRules;
             HexInfo = new HexInfo(cellSize);

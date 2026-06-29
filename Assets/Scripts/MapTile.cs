@@ -8,6 +8,7 @@ public class MapTile
     private GameObject _gameObject;
     private TileGOHandler _tileGOHandler;
     private Yield _yield;
+    private (int, int, int) coords;
 
     public GameObject gameObject { get => _gameObject; }
     public TileType TileType { get; private set; }
@@ -20,44 +21,47 @@ public class MapTile
             _tileGOHandler.UpdateYieldText(_yield);
         }
     }
+    public int X { get => coords.Item1; }
+    public int Y { get => coords.Item2; }
+    public int Z { get => coords.Item3; }
 
     public MapTile(int x, int y, MapNode mapNode, Transform parent)
     {
         int tileTypeIndex = BitwiseUtils.GetFirstActiveBitIndex(mapNode.TileType);
         TileInfo tileInfo = GameHandler.TileRules[tileTypeIndex].TileInfo;
 
-        int z = mapNode.GetElevation();
+        coords = (x, y, mapNode.GetElevation());
 
-        CreateGameObject(x, y, tileInfo.Prefab, parent);
-        SetupGameObjectTransform(x, y, z);
-        UpdateMeshWithElevation(x, y);
+        CreateGameObject(tileInfo.Prefab, parent);
+        SetupGameObjectTransform();
+        UpdateMeshWithElevation();
         _tileGOHandler = _gameObject.GetComponent<TileGOHandler>();
         Yield = tileInfo.Yield;
         TileType = (TileType)mapNode.TileType;
     }
 
-    private void CreateGameObject(int x, int y, GameObject prefab, Transform parent)
+    private void CreateGameObject(GameObject prefab, Transform parent)
     {
         _gameObject = GameObject.Instantiate(prefab, parent);
-        _gameObject.name = $"{x}, {y}";
+        _gameObject.name = $"{X}, {Y}";
     }
 
-    private void SetupGameObjectTransform(int x, int y, int z)
+    private void SetupGameObjectTransform()
     {
-        float worldXCoord = x * GameHandler.HexInfo.Width + (y % 2 * 0.5f * GameHandler.HexInfo.Width); // Offset the x-position of the tile every other row
-        float worldYCoord = y * 0.75f * GameHandler.HexInfo.Height;
-        _gameObject.transform.localPosition = new Vector3(worldXCoord, z, worldYCoord);
+        float worldXCoord = X * GameHandler.HexInfo.Width + (Y % 2 * 0.5f * GameHandler.HexInfo.Width); // Offset the x-position of the tile every other row
+        float worldYCoord = Y * 0.75f * GameHandler.HexInfo.Height;
+        _gameObject.transform.localPosition = new Vector3(worldXCoord, Z, worldYCoord);
     }
 
-    private void UpdateMeshWithElevation(int x, int y)
+    private void UpdateMeshWithElevation()
     {
         int outerVertStartIndex = 7;
         MeshFilter meshFilter = _gameObject.GetComponent<TileGOHandler>().GetMeshFilter();
         Vector3[] vertices = meshFilter.mesh.vertices;
-        int[] outerElevation = GetElevationMidPoints(x, y);
+        int[] outerElevation = GetElevationMidPoints(X, Y);
         if (vertices.Length - outerElevation.Length != outerVertStartIndex)
         {
-            throw new ArgumentOutOfRangeException($"Something wrong with vertices in object ({x}, {y}).");
+            throw new ArgumentOutOfRangeException($"Something wrong with vertices in object ({X}, {Y}).");
         }
         for(int i = outerVertStartIndex; i < vertices.Length; i++)
         {

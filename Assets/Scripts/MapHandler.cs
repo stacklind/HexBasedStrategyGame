@@ -22,23 +22,24 @@ using UnityEngine;
 
 public class MapHandler
 {
-    /// <summary>
-    /// Singleton instance of the grid manager.
-    /// </summary>
     public static MapHandler Instance { get; private set; }
 
     private AxialIndexArray2D<MapNode> mapNodes;
     private MapTile[,] map;
     private AStarSolver pathfinding;
-
-    /// <summary>
-    /// Constructor for singleton instance.
-    /// </summary>
-    /// <param name="mapSettings"Settings that define the map></param>
+    private List<MapTile>[] ownedTiles;
+    
     private MapHandler()
     {
-        MapSettings mapSettings = GameHandler.MapSettings;
         Instance = this;
+        MapSettings mapSettings = GameHandler.MapSettings;
+
+        ownedTiles = new List<MapTile>[mapSettings.StartingPlayers];
+        for(int i = 0; i < ownedTiles.Length; i++)
+        {
+            ownedTiles[i] = new List<MapTile>();
+        }
+
         map = new MapTile[mapSettings.Width, mapSettings.Height];
         WFCSolver wfc = new WFCSolver();
         mapNodes = wfc.Solve();
@@ -47,10 +48,6 @@ public class MapHandler
         GenerateMap(mapSettings.Width, mapSettings.Height);
     }
 
-    /// <summary>
-    /// Creates a new Grid.
-    /// </summary>
-    /// <param name="mapSettings">Settings that define the map.</param>
     public static bool Init()
     {
         if(Instance == null)
@@ -67,13 +64,6 @@ public class MapHandler
         return true;
     }
 
-    /// <summary>
-    /// Returns the <see cref="TileType"/> at the given XY-coordinates using odd-r layout.
-    /// </summary>
-    /// <param name="x">X coordinate (row).</param>
-    /// <param name="y">Y coordinate (column).</param>
-    /// <returns>The tile type at the specified offset coordinates.</returns>
-    /// <exception cref="ArgumentOutOfRangeException">Thrown when the coordinates are outside the map bounds.</exception>
     public TileType GetTileTypeOddR(int x, int y)
     {
         if (x < 0 || x >= map.GetLength(0) || y < 0 || y >= map.GetLength(1))
@@ -84,25 +74,12 @@ public class MapHandler
         return map[x, y].TileType;
     }
 
-    /// <summary>
-    /// Attempts to get the tile type at the given axial coordinates.
-    /// </summary>
-    /// <param name="q">Axial q coordinate.</param>
-    /// <param name="r">Axial r coordinate.</param>
-    /// <param name="tileType">Outputs the tile type when found.</param>
-    /// <returns>True if the axial coordinates are valid and <paramref name="tileType"/> is set; otherwise false.</returns>
     public TileType GetTileTypeAxial(int q, int r)
     {
         (int x, int y) = HexGrid.AxialToOddR(q, r);
         return GetTileTypeOddR(x, y);
     }
 
-    /// <summary>
-    /// Returns the instantiated <see cref="GridTile"/> at the given XY grid coordinates.
-    /// </summary>
-    /// <param name="x">X coordinate (row).</param>
-    /// <param name="y">Y coordinate (column).</param>
-    /// <returns>The <see cref="GridTile"/> instance stored at [x,y].</returns>
     public MapTile GetMapTileFromXY(int x, int y) => map[x, y];
     public MapTile GetMapTileFromXY((int x, int y) coords) => map[coords.x, coords.y];
     public MapNode GetMapNodeFromAxial(int q, int r) => mapNodes[q, r];
@@ -143,12 +120,6 @@ public class MapHandler
         return neighbours;
     }
 
-    /// <summary>
-    /// Instantiates the grid GameObject parent and creates GridTile objects for each cell.
-    /// </summary>
-    /// <param name="width">Grid width in cells.</param>
-    /// <param name="height">Grid height in cells.</param>
-    /// <param name="cellSize">Size of each cell in map units.</param>
     private void GenerateMap(int width, int height)
     {
         // Create a parent GameObject to hold all tile GameObjects in the scene hierarchy.
@@ -217,16 +188,18 @@ public class MapHandler
 
 public struct MapSettings
 {
-    public MapSettings(int width, int height, int cellSize, int maxElevation)
+    public MapSettings(int width, int height, int cellSize, int maxElevation, int startingPlayers)
     {
         Width = width;
         Height = height;
         CellSize = cellSize;
         MaxElevation = maxElevation;
+        StartingPlayers = startingPlayers;
     }
 
     public int Width { get; }
     public int Height { get; }
     public int CellSize { get; }
     public int MaxElevation { get; }
+    public int StartingPlayers { get; }
 }

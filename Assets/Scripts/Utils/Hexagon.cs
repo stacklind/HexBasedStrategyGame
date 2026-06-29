@@ -122,6 +122,22 @@ namespace HexagonUtils
 
             return meshInfo;
         }
+
+        public static Vector3[] GetHexVerts(int x, int y, int z, int cellSize)
+        {
+            HexInfo hexInfo = new HexInfo(cellSize);
+            Vector3[] verts = new Vector3[6]
+            {
+                new Vector3(x,                          z, y - 0.5f * hexInfo.Height),
+                new Vector3(x - 0.5f * hexInfo.Width,   z, y - 0.25f * hexInfo.Height),
+                new Vector3(x - 0.5f * hexInfo.Width,   z, y + 0.25f * hexInfo.Height),
+                new Vector3(x,                          z, y + 0.5f * hexInfo.Height),
+                new Vector3(x + 0.5f * hexInfo.Width,   z, y + 0.25f * hexInfo.Height),
+                new Vector3(x + 0.5f * hexInfo.Width,   z, y - 0.25f * hexInfo.Height)
+            };
+
+            return verts;
+        }
     }
 
     public struct HexInfo
