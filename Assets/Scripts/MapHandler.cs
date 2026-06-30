@@ -28,7 +28,7 @@ public class MapHandler
     private MapTile[,] map;
     private AStarSolver pathfinding;
     
-    private MapHandler()
+    private MapHandler(GameObject fowPrefab)
     {
         Instance = this;
         MapSettings mapSettings = GameHandler.MapSettings;
@@ -41,20 +41,14 @@ public class MapHandler
         GenerateMap(mapSettings.Width, mapSettings.Height);
     }
 
-    public static bool Init()
+    public static bool Init(GameObject fowPrefab)
     {
         if(Instance == null)
         {
-            new MapHandler();
+            new MapHandler(fowPrefab);
             return true;
         }
         return false;
-    }
-
-    public static bool Reinit()
-    {
-        new MapHandler();
-        return true;
     }
 
     public TileType GetTileTypeOddR(int x, int y)
